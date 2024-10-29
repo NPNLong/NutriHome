@@ -1,9 +1,12 @@
 from flask import Flask
 from flask_cors import CORS
+from Recipes.controller  import recipes
+
 
 def create_app():
     app = Flask(__name__)
     CORS(app) 
+    app.register_blueprint(recipes)
     return app
 
 
