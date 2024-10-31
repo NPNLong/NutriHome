@@ -3,6 +3,7 @@ from .services import show_recipe
 from .services import search_recipe_by_name
 from .services import get_recipe_detail
 from .services import add_recipe_to_menu
+from .services import delete_recipe_from_menu 
 
 recipes = Blueprint("recipes", __name__)
 
@@ -21,3 +22,7 @@ def get_detail():
 @recipes.route("/api/recipes/add-to-today-menu",methods =['POST'])
 def add_to_menu():
     return add_recipe_to_menu()
+
+@recipes.route("/api/recipes/remove-from-today-menu",methods=['DELETE'])
+def delete_from_menu():
+    return delete_recipe_from_menu()

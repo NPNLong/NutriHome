@@ -116,7 +116,7 @@ def add_recipe_to_menu():
         conn = get_db_connection()
         conn.execute("""
         INSERT INTO eating_histories (user_id,recipe_id, day,meal,eaten)
-        VALUES (?, ?, date('now'), ?,0)
+        VALUES (?, ?, date('now'), ?,1)
         """, (user_id,recipe_id, meal))
         conn.commit()
         conn.close()
@@ -124,3 +124,23 @@ def add_recipe_to_menu():
     
     else:
         return jsonify({'status': 'error', 'message': 'Unavailable recipe'}), 404
+    
+#Delete a recipe from today menu 
+def delete_recipe_from_menu():
+    eating_history_id = request.args.get('eating_history_id')
+    conn = get_db_connection()
+
+    eating_history = conn.execute("SELECT recipe_id FROM eating_histories WHERE eating_history_id = ?", (eating_history_id,)).fetchone()
+    conn.close()
+    
+    if eating_history:
+        conn = get_db_connection()
+        conn.execute("DELETE FROM eating_histories WHERE eating_history_id = ?", (eating_history_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({'status': 'success', 'message': 'Recipe deleted from today menu'}), 200
+    else:
+        return jsonify({'status': 'error', 'message': 'Unavailable history recorded'}), 404
+        
+    
+    
