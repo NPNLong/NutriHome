@@ -71,7 +71,8 @@ def update_personal_detail():
         
         else:
             return jsonify({'status': 'error', 'message': 'Failed to update personal detail'}), 404
-
+        
+#Show nutrition history within 3 days
 def show_history():
     user_id = request.args.get('user_id')
     conn = get_db_connection()
