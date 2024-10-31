@@ -100,3 +100,27 @@ def get_recipe_detail():
         }), 200, {'Content-Type': 'application/json'}
     else:
         return jsonify({'status': 'error', 'message': 'Unavailable recipe'}), 404
+    
+#Add a recipe to the today menu 
+def add_recipe_to_menu():
+    user_id = request.args.get('user_id')
+    recipe_id = request.args.get('recipe_id')
+    data = request.json 
+    meal = data.get('meal')
+    
+    conn = get_db_connection()
+    recipe = conn.execute("SELECT recipe_id FROM recipes WHERE recipe_id = ?", (recipe_id,)).fetchone()
+    conn.close()
+    
+    if recipe:
+        conn = get_db_connection()
+        conn.execute("""
+        INSERT INTO eating_histories (user_id,recipe_id, day,meal,eaten)
+        VALUES (?, ?, date('now'), ?,0)
+        """, (user_id,recipe_id, meal))
+        conn.commit()
+        conn.close()
+        return jsonify({'status': 'success', 'message': 'Recipe added to today menu'}), 200 
+    
+    else:
+        return jsonify({'status': 'error', 'message': 'Unavailable recipe'}), 404
