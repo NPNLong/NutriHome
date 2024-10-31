@@ -95,7 +95,7 @@ def show_history():
             FROM eating_histories 
             JOIN recipes 
             ON eating_histories.recipe_id = recipes.recipe_id
-            WHERE user_id = ? AND day >= date('now', '-3 days')
+            WHERE user_id = ? AND day >= date('now', '-3 days') AND eaten = 1
             GROUP BY day, meal
             ''', (user_id,)
         ).fetchall()  
@@ -138,7 +138,7 @@ def show_nutrition_today():
             FROM eating_histories 
             JOIN recipes 
             ON eating_histories.recipe_id = recipes.recipe_id
-            WHERE user_id = ? AND day = date('now')
+            WHERE user_id = ? AND day = date('now') AND eaten = 1
             GROUP BY meal
             ''', (user_id,)
         ).fetchall()  
