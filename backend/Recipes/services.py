@@ -13,55 +13,52 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
-#Show the list of recipe
+# Show the list of recipe
 def show_recipe():
         conn = get_db_connection()
         recipes = conn.execute("SELECT * FROM recipes").fetchall()
         conn.close()
         
         if recipes:
-            recipe_list = [
-                {
-                    'recipe_id': recipe['recipe_id'],
-                    'name': recipe['name'],
-                    'image': recipe['image'],
-                    'cooking_time': recipe['cooking_time'],
-                    'rating': recipe['rating'],
-                }
+            recipe_dict = {
+                    f"recipe_id = {recipe['recipe_id']}":{
+                        'name': recipe['name'],
+                        'image': recipe['image'],
+                        'cooking_time': recipe['cooking_time'],
+                        'rating': recipe['rating']
+                    }
                 for recipe in recipes
-            ] 
+            }
             return jsonify({
                 'status': 'success',
-                'data': recipe_list
+                'data': recipe_dict
             }), 200
         else:
             return jsonify({
-                'status': 'error',
-                'message': 'No recipes found'
+                'status': 'error'
             }), 404
 
-#Search recipe by name 
+# Search recipe by name 
 def search_recipe_by_name(name):
-    try:
         conn = get_db_connection()
         recipe = conn.execute("SELECT * FROM recipes WHERE name = ?", (name,)).fetchone()
         conn.close()
         
         if recipe:
             return jsonify({
-                'status': 'success',
-                'data': {
-                    'name': recipe['name'],
-                    'image': recipe['image'],
-                    'cooking_time': recipe['cooking_time'],
-                    'rating': recipe['rating']
+               f"recipe_id = {recipe['recipe_id']}":{
+                        'name': recipe['name'],
+                        'image': recipe['image'],
+                        'cooking_time': recipe['cooking_time'],
+                        'rating': recipe['rating']
                 }
-            }), 200, {'Content-Type': 'application/json'}
+        }), 200
+
         else:
-            return jsonify({'status': 'error', 'message': 'Unavailable recipe'}), 404
-    except Exception as e:
-        print(f"Error occurred: {e}")  
-        return jsonify({'status': 'error', 'message': 'Internal Server Error'}), 500
+            return jsonify({
+                'status': 'error',
+                'message': 'No recipe found'
+            }), 404
     
 #Get the detail of a recipe
 def get_recipe_detail():
@@ -85,17 +82,19 @@ def get_recipe_detail():
     if recipe:
         return jsonify({
             'status': 'success',
-            'data': {
+            "data":{
                 'name': recipe['name'],
                 'image': recipe['image'],
                 'cooking_time': recipe['cooking_time'],
                 'rating': recipe['rating'],
                 'ingredients': json.loads(recipe['ingredients']),
                 'steps': json.loads(recipe['steps']),
-                'carbs': recipe['carbs'],
-                'protein': recipe['protein'],
-                'fat': recipe['fat'],
-                'calories': recipe['calories']
+                'nutrition_detail':{
+                    'carbs': recipe['carbs'],
+                    'protein': recipe['protein'],
+                    'fat': recipe['fat'],
+                    'calories': recipe['calories']
+                }
             }
         }), 200, {'Content-Type': 'application/json'}
     else:
