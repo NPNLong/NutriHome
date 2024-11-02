@@ -111,7 +111,7 @@ st.title("Recipes")
 st.write("NutriHome đồng hành với người dùng như một người bạn cùng nhau chia sẻ những “bí kíp” nấu ăn đảm bảo sức khỏe nhưng không kém phần hấp dẫn. Các công thức chế biến món ăn được lựa chọn từ những nguồn uy tín như Kitchen Stories, Tasty, All recipes, Cookyvn sẽ được NutriHome trình bày dưới dạng hình ảnh bắt mắt cùng với những tóm tắt ngắn gọn, xúc tích nhằm đảm bảo bất kỳ người dùng nào cũng có thể trở thành những “bậc thầy làng bếp” xuất sắc.")
 
 with st.container(border=True):
-    st.subheader("🔎Search")
+    st.subheader("Search")
     col1, col2, col3 = st.columns([70, 15, 15])
     with col1:
         search_food_name = st.text_input("Searching bar", label_visibility="collapsed")

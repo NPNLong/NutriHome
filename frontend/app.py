@@ -59,13 +59,15 @@ settings = st.Page("pages/personal/settings.py", title="Settings", icon=":materi
 weeklyMenu = st.Page("pages/features/weeklyMenu.py", title="Weekly Menu", icon=":material/assignment:")
 recipes = st.Page("pages/features/recipes.py", title="Recipes", icon=":material/content_paste_search:")
 history = st.Page("pages/features/history.py", title="History", icon=":material/history:")
-community = st.Page("pages/features/community.py", title="Community", icon=":material/groups:")
+family_health = st.Page("pages/features/family_health.py", title="Family Health", icon=":material/diversity_1:")
+community = st.Page("pages/features/community.py", title="Community", icon=":material/forum:")
+
 
 if st.session_state.logged_in:
     pg = st.navigation(
         {
             "": [home],
-            "Features": [weeklyMenu, recipes, history, community],
+            "Features": [weeklyMenu, recipes, history, family_health, community],
             "Personal": [profile, settings, logout_page],
         }
     )

@@ -11,7 +11,11 @@ if st.session_state.logged_in:
 
     fig = px.pie(names=labels, values=sizes, title="Lượng calories đã hấp thụ", color_discrete_sequence=colors, hole = 0.70)
     fig.update_traces(textinfo='none')
-    fig.update_layout(annotations=[dict(text='1500' + '/' + '2000<br>calories', x=0.5, y=0.5, font_size=25, showarrow=False)],
+
+    currentCalories = 1500
+    goalCalories = 2000
+
+    fig.update_layout(annotations=[dict(text=str(currentCalories) + '/' + str(goalCalories) + '<br>calories', x=0.5, y=0.5, font_size=25, showarrow=False)],
                         showlegend=False, width = 380, height = 380)
 
     with st.container(border=True, height=400):
@@ -165,6 +169,17 @@ else:
     st.title("Chào mừng!")
     st.text("")
     st.write("NutriHome là ứng dụng tư vấn dinh dưỡng thông minh, sử dụng AI để tính toán chính xác nhu cầu dinh dưỡng cá nhân. Ứng dụng tạo thực đơn tùy chỉnh theo sở thích và theo dõi lịch sử ăn uống của người dùng, giúp duy trì thói quen ăn uống lành mạnh.")
+    
+    st.text("")
+    st.text("")
+
+    st.subheader("Bạn chưa biết hôm nay sẽ ăn gì? Bạn muốn tạo một thực đơn thật Healthy? Hãy cùng bắt đầu với chúng tôi!")
+    st.text("")
+    login = st.button("Tạo thực đơn ngay!", type="primary", use_container_width = True)
+
+    if login:
+        st.session_state.login_page = True
+        st.rerun()
 
     st.text("")
     st.text("")
@@ -216,14 +231,3 @@ else:
         with col1:
             st.write("**Community**")
             st.write("Đây là một cộng đồng, nơi các bạn có thể chia sẻ cho nhau những món ăn và công thức nấu ăn độc đáo mà các bạn khám phá ra. Đồng thời, các bạn có thể lưu lại những công thức mà các bạn yêu thích hoặc tâm đắc.")
-
-    st.text("")
-    st.text("")
-
-    st.subheader("Bạn chưa biết hôm nay sẽ ăn gì? Bạn muốn tạo một thực đơn thật Healthy? Hãy cùng bắt đầu với chúng tôi!")
-    st.text("")
-    login = st.button("Tạo thực đơn ngay!", type="primary", use_container_width = True)
-
-    if login:
-        st.session_state.login_page = True
-        st.rerun()
