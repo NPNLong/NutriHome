@@ -72,11 +72,12 @@ def update_personal_detail():
         else:
             return jsonify({'status': 'error', 'message': 'Failed to update personal detail'}), 404
         
-#Show nutrition history within 3 days
+# Show nutrition history within 3 days
 def show_history():
     user_id = request.args.get('user_id')
     conn = get_db_connection()
     
+    # Check if user exists
     user = conn.execute('SELECT user_id FROM eating_histories WHERE user_id = ?', (user_id,)).fetchone()
     conn.close()
     
@@ -86,35 +87,40 @@ def show_history():
             '''
             SELECT
                 day,
-                meal, 
+                meal,
                 GROUP_CONCAT(recipes.name, ',') AS recipes,
-                SUM(carbs) AS "total carbs",
-                SUM(protein) AS "total protein",
-                SUM(fat) AS "total fat",
-                SUM(calories) AS "total calories"
+                SUM(carbs) AS carbs,
+                SUM(protein) AS protein,
+                SUM(fat) AS fat,
+                SUM(calories) AS calories
             FROM eating_histories 
             JOIN recipes 
             ON eating_histories.recipe_id = recipes.recipe_id
             WHERE user_id = ? AND day >= date('now', '-3 days') AND eaten = 1
             GROUP BY day, meal
             ''', (user_id,)
-        ).fetchall()  
+        ).fetchall()
         conn.close()
-        
-        result = [{
-            'day': row['day'],
-            'meal': row['meal'],
-            'recipes': row['recipes'],
-            'total carbs': row['total carbs'],
-            'total protein': row['total protein'], 
-            'total fat': row['total fat'],
-            'total calories': row['total calories']
-        } for row in nutrition_data]
-        
-        return jsonify({'status': 'success', 'data': result}), 200, {'Content-Type': 'application/json'}
+
+        # Initialize result dictionary
+        result = {}
+
+        # Iterate over each row in the data
+        for row in nutrition_data:
+            day = row['day']
+            # Assign recipes to specific meals (breakfast, lunch, dinner)
+            result[day]["meals"][row['meal']] = row['recipes'].split(',')
+
+            # Sum up nutrients for each day
+            result[day]["nutrients"]["carbs"] += row['carbs']
+            result[day]["nutrients"]["fat"] += row['fat']
+            result[day]["nutrients"]["protein"] += row['protein']
+
+        # Convert result to a list of dictionaries if needed
+        final_result = [{day: data} for day, data in result.items()]
+        return jsonify({'status': 'success', 'data': final_result}), 200, {'Content-Type': 'application/json'}
     
-    else:
-        return jsonify({'status': 'error', 'message': 'User has not made any menu yet'}), 404
+    return jsonify({'status': 'error', 'message': 'User not found'}), 404
 
              
 #Show today's nutrition history 
@@ -131,10 +137,10 @@ def show_nutrition_today():
             '''
             SELECT 
                 meal, 
-                SUM(carbs) AS "total carbs",
-                SUM(protein) AS "total protein",
-                SUM(fat) AS "total fat",
-                SUM(calories) AS "total calories"
+                SUM(carbs) AS "carbs",
+                SUM(protein) AS "protein",
+                SUM(fat) AS "fat",
+                SUM(calories) AS "calories"
             FROM eating_histories 
             JOIN recipes 
             ON eating_histories.recipe_id = recipes.recipe_id
@@ -143,16 +149,25 @@ def show_nutrition_today():
             ''', (user_id,)
         ).fetchall()  
         conn.close()
-    
-        result = [{
-            'meal': row['meal'],
-            'total carbs': row['total carbs'],
-            'total protein': row['total protein'], 
-            'total fat': row['total fat'],
-            'total calories': row['total calories']
-        } for row in nutrition_data]
         
-        return jsonify({'status': 'success', 'data': result}), 200, {'Content-Type': 'application/json'}
+        conn =get_db_connection()
+        total_nutrients =
+
+    result = {}
+
+    for row in nutrition_data:
+        meal = row['meal']
+        
+        result[meal] = {
+            "carbohydrates": row['carbs'],
+            "protein": row['protein'],
+            "fat": row['fat'],
+            "calories": row['calories']
+        }
+
+    return jsonify({'status': 'success', 'data': result}), 200, {'Content-Type': 'application/json'}
+
     
-    else:
-        return jsonify({'status': 'error', 'message': 'User has not made any menu yet'}), 404
+       
+    
+   

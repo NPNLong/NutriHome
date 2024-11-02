@@ -19,7 +19,7 @@ def update_detail():
 def show_nutrition_history():
     return show_history()
     
-@personal.route("/api/personal/history/detail",methods =['GET'])
+@personal.route("/api/personal/history/nutrients_detail",methods =['GET'])
 def show_nutrition_detail_today():
     return show_nutrition_today()
 
