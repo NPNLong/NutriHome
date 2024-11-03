@@ -39,9 +39,11 @@ def show_recipe():
             }), 404
 
 # Search recipe by name 
-def search_recipe_by_name(name):
+def search_recipe_by_name():
+        data = request.json 
+        recipe_name = data.get('recipe_name')
         conn = get_db_connection()
-        recipe = conn.execute("SELECT * FROM recipes WHERE name = ?", (name,)).fetchone()
+        recipe = conn.execute("SELECT * FROM recipes WHERE name = ?", (recipe_name,)).fetchone()
         conn.close()
         
         if recipe:
@@ -62,7 +64,9 @@ def search_recipe_by_name(name):
     
 #Get the detail of a recipe
 def get_recipe_detail():
-    recipe_id = request.args.get('recipe_id')
+    data = request.json 
+    recipe_id = data.get('recipe_id')
+    
     conn = get_db_connection()
     recipe = conn.execute("""
     SELECT name, 
@@ -102,9 +106,9 @@ def get_recipe_detail():
     
 #Add a recipe to the today menu 
 def add_recipe_to_menu():
-    user_id = request.args.get('user_id')
-    recipe_id = request.args.get('recipe_id')
     data = request.json 
+    user_id = data.get('user_id')
+    recipe_id = data.get('recipe_id')
     meal = data.get('meal')
     
     conn = get_db_connection()
@@ -126,7 +130,8 @@ def add_recipe_to_menu():
     
 #Delete a recipe from today menu 
 def delete_recipe_from_menu():
-    eating_history_id = request.args.get('eating_history_id')
+    data = request.json 
+    eating_history_id = data.get('eating_history_id')
     conn = get_db_connection()
 
     eating_history = conn.execute("SELECT recipe_id FROM eating_histories WHERE eating_history_id = ?", (eating_history_id,)).fetchone()

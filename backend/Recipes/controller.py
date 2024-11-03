@@ -11,9 +11,9 @@ recipes = Blueprint("recipes", __name__)
 def show_recipes():
     return show_recipe()
 
-@recipes.route("/api/recipes/<name>", methods=['GET'])
-def search_recipe(name):
-    return search_recipe_by_name(name)
+@recipes.route("/api/recipes/search-by-name", methods=['GET'])
+def search_recipe():
+    return search_recipe_by_name()
 
 @recipes.route("/api/recipes/detail", methods=['GET'])
 def get_detail():
