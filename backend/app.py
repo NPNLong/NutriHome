@@ -2,6 +2,7 @@ from flask import Flask
 from flask_cors import CORS
 from Recipes.controller  import recipes
 from Personal.controller import personal
+from Forum.controller import forum
 
 
 def create_app():
@@ -9,6 +10,7 @@ def create_app():
     CORS(app) 
     app.register_blueprint(recipes)
     app.register_blueprint(personal)
+    app.register_blueprint(forum)
     return app
 
 
