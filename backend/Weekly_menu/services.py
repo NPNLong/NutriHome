@@ -23,15 +23,15 @@ def get_weekly_menu_service(user_id):
 
     # Tạo cấu trúc dữ liệu cho thực đơn cả tuần
     days_of_week = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-    weekly_menu = {day: {"breakfast": [], "lunch": [], "dinner": []} for day in days_of_week}
+    weekly_menu = {day.lower(): {"breakfast": [], "lunch": [], "dinner": []} for day in days_of_week}
 
     # Truy vấn tất cả các bữa ăn của người dùng trong tuần hiện tại
-    meals = conn.execute(""" 
-    SELECT r.name, eh.meal, eh.day
+    meals = conn.execute("""
+    SELECT r.recipe_id, r.name, r.image, eh.meal, eh.day
     FROM eating_histories eh
     JOIN recipes r ON eh.recipe_id = r.recipe_id  
-    WHERE eh.user_id = ? AND eh.day BETWEEN ? AND ? 
-""", (user_id, start_of_week.strftime('%Y-%m-%d'), end_of_week.strftime('%Y-%m-%d'))).fetchall()
+    WHERE eh.user_id = ? AND eh.day BETWEEN ? AND ?
+    """, (user_id, start_of_week.strftime('%Y-%m-%d'), end_of_week.strftime('%Y-%m-%d'))).fetchall()
 
     # Phân loại bữa ăn theo từng ngày trong tuần
     for meal in meals:
@@ -40,22 +40,29 @@ def get_weekly_menu_service(user_id):
         # Kiểm tra và chuyển đổi chuỗi ngày, bỏ qua bất kỳ phần giờ nào nếu có
         try:
             meal_date = datetime.strptime(meal_date_str.strip(), '%Y-%m-%d')
-            day_of_week = meal_date.strftime('%a')  # Lấy tên ngày trong tuần (Mon, Tue, ...)
+            day_of_week = meal_date.strftime('%a').lower()  # Lấy tên ngày trong tuần (mon, tue, ...)
         except ValueError:
             print(f"Lỗi định dạng ngày cho giá trị: {meal_date_str}")
             continue
 
+        # Thêm thông tin bữa ăn vào thực đơn của từng ngày
+        meal_data = {
+            "recipe_id": meal['recipe_id'],
+            "name": meal['name'],
+            "image": meal['image']
+        }
+
         if meal['meal'] == 'breakfast':  
-            weekly_menu[day_of_week]['breakfast'].append(meal['name'])
+            weekly_menu[day_of_week]['breakfast'].append(meal_data)
         elif meal['meal'] == 'lunch':
-            weekly_menu[day_of_week]['lunch'].append(meal['name'])
+            weekly_menu[day_of_week]['lunch'].append(meal_data)
         elif meal['meal'] == 'dinner':
-            weekly_menu[day_of_week]['dinner'].append(meal['name'])
+            weekly_menu[day_of_week]['dinner'].append(meal_data)
 
     conn.close()
 
-    # Định dạng lại dữ liệu cho JSON
-    ordered_weekly_menu = {day: weekly_menu[day] for day in days_of_week}
+    # Định dạng lại dữ liệu cho JSON theo yêu cầu
+    ordered_weekly_menu = [{day: weekly_menu[day]} for day in weekly_menu]
     
     return {
         "status": "success",
