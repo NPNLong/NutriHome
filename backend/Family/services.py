@@ -142,7 +142,7 @@ def calculate_nutrition_for_user(user_id):
     eating_history = conn.execute("""
         SELECT recipe_id
         FROM eating_histories 
-        WHERE user_id = ? AND day = ?
+        WHERE user_id = ? AND day = ? AND eaten = 1
     """, (user_id, today)).fetchall()
 
     # Khởi tạo các chỉ số dinh dưỡng hiện tại
@@ -156,7 +156,7 @@ def calculate_nutrition_for_user(user_id):
         recipe = conn.execute("""
             SELECT carbs, fat, protein, calories 
             FROM recipes 
-            WHERE id = ?
+            WHERE recipe_id = ?
         """, (entry['recipe_id'],)).fetchone()
         
         if recipe:

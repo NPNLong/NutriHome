@@ -8,45 +8,78 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
+# Hàm tính các chỉ số dinh dưỡng hiện tại cho mỗi thành viên trong ngày hiện tại
+def calculate_nutrition_for_user(user_id):
+    conn = get_db_connection()
+    today = datetime.now().strftime('%Y-%m-%d')  # Lấy ngày hiện tại dưới dạng chuỗi 'YYYY-MM-DD'
+
+    # Truy vấn lịch sử ăn uống của thành viên trong ngày hiện tại
+    eating_history = conn.execute("""
+        SELECT recipe_id
+        FROM eating_histories 
+        WHERE user_id = ? AND day = ? AND eaten = 1
+    """, (user_id, today)).fetchall()
+
+    # Khởi tạo các chỉ số dinh dưỡng hiện tại
+    currentCarbs = 0
+    currentFat = 0
+    currentProtein = 0
+    currentCalo = 0
+
+    # Tính toán tổng các chỉ số dinh dưỡng dựa trên `eating_history` của ngày hiện tại
+    for entry in eating_history:
+        recipe = conn.execute("""
+            SELECT carbs, fat, protein, calories 
+            FROM recipes 
+            WHERE recipe_id = ?
+        """, (entry['recipe_id'],)).fetchone()
+        
+        if recipe:
+            
+            currentCarbs += recipe['carbs'] 
+            currentFat += recipe['fat'] 
+            currentProtein += recipe['protein'] 
+            currentCalo += recipe['calories'] 
+
+    conn.close()
+    
+    return {
+        "currentCarbs": currentCarbs,
+        "currentFat": currentFat,
+        "currentProtein": currentProtein,
+        "currentCalo": currentCalo
+    }
+
 def fetch_calorie_chart(user_id):
     conn = get_db_connection()
-    
-    # Lấy chỉ tiêu calo của người dùng
-    user = conn.execute("SELECT target_calories AS target_calories FROM users WHERE user_id = ?", (user_id,)).fetchone()
+
+    # Lấy chỉ tiêu dinh dưỡng của người dùng từ bảng users
+    user = conn.execute("""
+        SELECT target_calories, target_carbs, target_fat, target_protein 
+        FROM users 
+        WHERE user_id = ?
+    """, (user_id,)).fetchone()
     if not user:
         conn.close()
         return {'status': 'error', 'message': 'User not found.'}, 404
 
-    # Lấy ngày hiện tại dưới dạng chuỗi 'YYYY-MM-DD'
-    today = datetime.now().strftime('%Y-%m-%d')
-
-    # Tính toán tổng lượng calories hấp thụ từ các recipe của ngày hiện tại
-    absorbedCalories = 0
-    eating_history = conn.execute("""
-        SELECT recipe_id 
-        FROM eating_histories 
-        WHERE user_id = ? AND day = ?
-    """, (user_id, today)).fetchall()
-
-    for entry in eating_history:
-        recipe = conn.execute("""
-            SELECT calories 
-            FROM recipes 
-            WHERE id = ?
-        """, (entry['recipe_id'],)).fetchone()
-        
-        if recipe:
-            absorbedCalories += recipe['calories']
-
+    # Lấy dữ liệu hiện tại cho các chất dinh dưỡng
+    nutrition_data = calculate_nutrition_for_user(user_id)
+    
+    # Trả về dữ liệu cho biểu đồ dinh dưỡng
     conn.close()
-
-    # Trả về dữ liệu cho biểu đồ calo
     return {
         'status': 'success',
         'data': {
             'chart': {
                 'goalCalories': user['target_calories'],
-                'absorbedCalories': absorbedCalories
+                'goalCarbs': user['target_carbs'],
+                'goalFat': user['target_fat'],
+                'goalProtein': user['target_protein'],
+                'absorbedCalories': nutrition_data['currentCalo'],
+                'absorbedCarbs': nutrition_data['currentCarbs'],
+                'absorbedFat': nutrition_data['currentFat'],
+                'absorbedProtein': nutrition_data['currentProtein']
             }
         }
     }, 200
