@@ -29,9 +29,7 @@ def get_daily_nutrition():
 # Route cho API tải lên hóa đơn ăn ngoài
 @menu_bp.route('/api/weekly_menu/upload', methods=['POST'])
 def upload_receipt():
-    file = request.files.get('file')
-    if not file:
-        return jsonify({'status': 'error', 'message': 'Failed to upload the receipt.'}), 400
+    data = request.get_json()
 
-    result, status_code = upload_receipt_service(file)
+    result, status_code = upload_receipt_service(data)
     return jsonify(result), status_code

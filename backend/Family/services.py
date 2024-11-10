@@ -4,7 +4,7 @@ import json
 from flask import jsonify
 
 # Connect to the SQLite database
-DATABASE = 'nutrihome.db'
+DATABASE = os.path.join(os.path.dirname(os.getcwd()), 'nutrihome.db')
 
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)

@@ -1,8 +1,12 @@
 from datetime import datetime, timedelta
 import sqlite3
+import os
+import easyocr 
+import json
+from dotenv import load_dotenv
+import requests
 # Connect to the SQLite database
-DATABASE = 'nutrihome.db'
-
+DATABASE = os.path.join(os.path.dirname(os.getcwd()), 'nutrihome3.db')
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
@@ -98,10 +102,53 @@ def get_daily_nutrition_service(user_id):
 
 def upload_receipt_service(file):
     # Thêm logic xử lý file nếu cần, giả sử chỉ trả về mẫu dữ liệu
-    return {
-        'status': 'success',
-        'message': 'Receipt uploaded successfully',
-        'data': {
-            'items': ['Grilled Chicken Salad', 'Spaghetti Carbonara', 'Sushi Rolls', 'Beef Tacos']
-        }
-    }, 200
+    
+
+    # Khởi tạo EasyOCR reader
+    reader = easyocr.Reader(['vi'])
+
+    # Đọc và nhận dạng văn bản từ ảnh
+    image_path = 'openAI/receipt.png'
+    results = reader.readtext(image_path, detail=0) 
+
+    all_text = ''
+    for idx, text in enumerate(results, 1):
+        all_text += text + " "
+
+    load_dotenv()
+    API_KEY = os.getenv("GEMINI_API_KEY")
+    API_URL = os.getenv("GEMINI_API_URL")
+
+    headers = {
+        'Content-Type': 'application/json',
+    }
+
+    data = {
+        "contents": [
+            {
+                "parts": [
+                    {
+                        "text": f"""You are given the receipt: {all_text}
+                        Please list all the name of dishes. You just need to list, do not need to explain.
+                        Example: 
+                        "Pho ga, 
+                        Pho, 
+                        Bun cha"
+                        """
+                
+                    }
+                ]
+            }
+        ]
+    }
+
+    response = requests.post(API_URL, headers=headers, data=json.dumps(data), params={"key": API_KEY})
+
+    if response.status_code == 200:
+        response_data = response.json()
+        print(response_data['candidates'][0]['content']['parts'][0]['text'])
+        recipes = response_data['candidates'][0]['content']['parts'][0]['text'].split('\n')
+        print(recipes)
+    else:
+        print(f"Lỗi khi gọi API Gemini: {response.status_code}")
+    
