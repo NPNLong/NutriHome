@@ -1,4 +1,5 @@
 from flask import Flask
+
 from Login_Signup.controller import auth_bp
 from Home.controller import calorie_bp
 from Weekly_menu.controller import menu_bp
