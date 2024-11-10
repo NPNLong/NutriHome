@@ -27,7 +27,9 @@ def show_personal_detail():
             height,
             dob,
             avatar,
-            activity_level  
+            activity_level,
+            disease,
+            allergen   
     FROM users WHERE user_id = ?''',(user_id,)).fetchone ()
     conn.close()
     
@@ -43,7 +45,9 @@ def show_personal_detail():
                 'dob': person['dob'],
                 'height': person['height'],
                 'weight': person['weight'],
-                'activity_level': person['activity_level']
+                'activity_level': person['activity_level'],
+                'disease': person['disease'],
+                'allergen': person['allergen']
             }
         }), 200, {'Content-Type': 'application/json'}
     else:
@@ -56,6 +60,8 @@ def update_personal_detail():
         height = data.get('height')
         weight = data.get('weight')
         activity_level = data.get('activity_level')
+        disease = data.get('disease')
+        allergen = data.get('allergen')
         conn = get_db_connection()
         person = conn.execute("SELECT user_id FROM eating_histories WHERE user_id = ?", (user_id,)).fetchone()
         conn.close()
@@ -63,9 +69,9 @@ def update_personal_detail():
         if person:
             conn = get_db_connection()
             conn.execute("""
-            UPDATE users SET height = ?, weight = ?, activity_level = ?
+            UPDATE users SET height = ?, weight = ?, activity_level = ?, disease = ?, allergen = ?
             WHERE user_id = ?
-            """, (height,weight,activity_level,user_id,))
+            """, (height,weight,activity_level,user_id,disease,allergen))
             conn.commit()
             conn.close()
             return jsonify({'status': 'success', 'message': 'Updated personal detail scuccessfully'}), 200 
