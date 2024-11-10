@@ -1,56 +1,64 @@
 import streamlit as st
 from PIL import Image
+from datetime import datetime
+import pytz
 
 # Initialize favorite status
 if 'favorite' not in st.session_state:
     st.session_state.favorite = False
 
-# Initialize session for comments and posts
-if "posts" not in st.session_state:
-    st.session_state.posts = [
-        {
-            "title": "Cách nấu cơm siêu ngon!",
-            "author": "Nguyễn Văn A",
-            "description": "Nấu ngon thì cơm sẽ siêu ngon!",
-            "image": "food_images/com.jpg",
-            "comments": ["Vũ Mạnh Cường: Bịp vcl", "Hoàng Khánh Chi: Top 1 công thức tôi luôn tin tưởng", "Phạm Anh Tuấn: Cho thêm giấm ngon x100"]
-        },
-        {
-            "title": "SGUET",
-            "author": "Lê Thị B",
-            "description": "Đỉnh mãi SG!",
-            "image": "features_images/sg.jpg",
-            "comments": ["Nguyễn Huy Thái: Ảnh xấu vcl"]
-        }
-    ]
-
-@st.dialog("Bài viết", width="large")
+@st.dialog("Tạo bài viết mới", width="large")
 def addNewPost():
-    col1, col2 = st.columns([1, 1], gap='medium')
+    col1, col2 = st.columns([1, 1])
 
     with col1:
         uploaded_image = st.file_uploader("Ảnh bài viết", type=["jpg", "jpeg", "png"])
         if uploaded_image is not None:
-            image = Image.open(uploaded_image)
-            st.image(image, use_column_width=True)
+            image = Image.open(uploaded_image).convert("RGB")
+            st.image(image, use_container_width=True)
 
     with col2:
         title = st.text_input("Tiêu đề bài viết")
         description = st.text_area("Mô tả", placeholder="Write your post's description here...")
+        if st.button("Chia sẻ bài viết", type='primary', use_container_width=True):
+            st.session_state.posts.append({
+                "post_id": 4,
+                "author_id": st.session_state.user["id"],
+                "author": f"{st.session_state.user["fullname"]}",
+                "author_username": f"{st.session_state.user["username"]}",
+                "title": title,
+                "content": description,
+                "image": image,
+                "created_at": datetime.now(pytz.timezone("Asia/Bangkok")).strftime("%d-%m-%Y %H:%M:%S"),
+                "react": False,
+                "total_reacts": 0,
+                "comments": []
+            })
+            st.rerun()
 
-    if st.button("Chia sẻ bài viết"):
-        st.session_state.posts.append({
-            "title": title,
-            "author": f"{st.session_state.fullname}",  # Update author dynamically if needed
-            "description": description,
-            "image": image,
-            "comments": []
-        })
-        st.rerun()
-    
+# @st.dialog("Chỉnh sửa bài viết", width="large")
+# def editPost(i):
+#     col1, col2 = st.columns([1, 1])
 
-def toggle_favorite():
-    st.session_state.favorite = not st.session_state.favorite
+#     with col1:
+#         uploaded_image = st.file_uploader("Ảnh bài viết", type=["jpg", "jpeg", "png"])
+#         if uploaded_image is not None:
+#             image = Image.open(uploaded_image).convert("RGB")
+#             st.image(image, use_container_width=True)
+#         else:
+#             st.image(st.session_state.posts[i]["image"], use_container_width=True)
+
+#     with col2:
+#         title = st.text_input("Tiêu đề bài viết", value=st.session_state.posts[i]["title"])
+#         description = st.text_area("Mô tả", placeholder="Write your post's description here...", value=st.session_state.posts[i]["content"])
+
+#         if st.button("Chỉnh sửa bài viết", type='primary', use_container_width=True):
+#             st.session_state.posts[i]["title"] = title
+#             st.session_state.posts[i]["content"] = description
+#             st.session_state.posts[i]["created_at"] = datetime.now(pytz.timezone("Asia/Bangkok")).strftime("%d-%m-%Y %H:%M:%S")
+#             if uploaded_image is not None:
+#                 st.session_state.posts[i]["image"] = image
+#             st.rerun()
 
 st.title("Community")
 st.write("NutriHome cung cấp diễn đàn, giúp những người có cùng đam mê ẩm thực có thể chia sẻ những cách chế biến thực phẩm sáng tạo và độc đáo của riêng mình.")
@@ -58,52 +66,76 @@ st.write("NutriHome cung cấp diễn đàn, giúp những người có cùng đ
 st.header("**What's new?**", divider='gray')
 st.text('')
 
-col1, col2 = st.columns([42, 38], vertical_alignment='center')
+col1, col2 = st.columns([40, 60])
 with col1:
-    st.write("**Bạn muốn chia sẻ 'bí kíp nấu ăn' nào không?**")
-with col2:
-    add_new_post = st.button("Add new post", use_container_width=True, type='primary')
+    add_new_post = st.button("Add new post", type='primary', use_container_width=True)
     if(add_new_post):
         addNewPost()
 
+st.session_state.posts = sorted(
+    st.session_state.posts,
+    key=lambda post: datetime.strptime(post["created_at"], "%d-%m-%Y %H:%M:%S"),
+    reverse=True
+)
+
+# with st.container(border=False, height=2000):
 for i, post in enumerate(st.session_state.posts):
     st.text('')
     with st.container(border=True):
-        st.subheader(post["title"], divider='gray')
-        col1, col2 = st.columns([35,65])
-
+        st.text('')
+        col1, col2 = st.columns([1, 9])
         with col1:
-            st.image(post["image"])
-
-            c1, c2 = st.columns([4, 6])
-
-            with c1:
-                # Hiển thị nút yêu thích
-                if st.session_state.favorite:
-                    if st.button("❤️", on_click=toggle_favorite, key=f"favorite_{i}", use_container_width=True):
-                        st.write("Bạn đã thích món ăn này!")
-                else:
-                    if st.button("♡", on_click=toggle_favorite, key=f"favorite_{i}", use_container_width=True):
-                        st.write("Hãy yêu thích món ăn này!")
-
-            user_comment = st.text_area("**Bình luận**", placeholder="Write your comment here...", key=f"comment_input_{i}")
-            commentary = st.button("Bình luận", use_container_width=True, type='primary', key=f"comment_button_{i}")
-
-            if (commentary) and user_comment:
-                post["comments"].append(f"{st.session_state.fullname}: {user_comment}")
-                st.rerun()
-            
-
+            st.image(f"images/avatar/{post["author_username"]}/macdinh.jpg", use_container_width=True)
         with col2:
-            with st.container(border=True):
-                st.write(f"**Author:** {post['author']}")
-            with st.container(border=True):
-                st.write("**Mô tả**")
-                st.write(post["description"])
+            st.write(f"**{post["author"]}**")
+            st.write(f"""**Ngày đăng**: {post["created_at"]}""")
+        st.text('')
+        st.subheader(post["title"])
+        st.write(post["content"])
+        st.text('')
+        st.image(post["image"], use_container_width=True)
 
-            with st.container(border=True):
-                st.write("**Bình luận**")
+        col1, col2, col3, col4, col5 = st.columns([20, 25, 10, 25, 20], vertical_alignment='center')
+        with col1:
+            st.button(f"❤️ {post["total_reacts"]}", key=f"react{i}", use_container_width=True, disabled=True)
+        with col2:
+            if post["react"]:
+                if st.button("Đã yêu thích", key=f"favorite_{i}", use_container_width=True):
+                    post["total_reacts"] -= 1
+                    post["react"] = False
+                    st.rerun()
+            else:
+                if st.button("Yêu thích", key=f"favorite_{i}", use_container_width=True, type='primary'):
+                    post["total_reacts"] += 1
+                    post["react"] = True
+                    st.rerun()
+        # with col4:
+        #     if post["author_id"] == st.session_state.user["id"]:
+        #         if st.button("Chỉnh sửa bài viết", key=f"edit{i}", use_container_width=True):
+        #             editPost(i)
+        #     else:
+        #         st.button("Chỉnh sửa bài viết", key=f"edit{i}", use_container_width=True, disabled=True)
+        with col5:
+            if post["author_id"] == st.session_state.user["id"]:
+                if st.button("Xóa bài viết", key=f"delete{i}", use_container_width=True):
+                    st.session_state.posts.pop(i)
+                    st.rerun()
+            else:
+                st.button("Xóa bài viết", key=f"delete{i}", use_container_width=True, disabled=True)
 
-                for comment in post["comments"]:
-                    with st.container(border=True):
-                        st.write("*" + comment + "*")
+        st.text('')
+
+        st.write("**Bình luận**")
+        with st.container(border=False, height=200):
+            for comment in post["comments"]:
+                with st.container(border=True):
+                    st.write(f"{comment}")
+
+        st.text('')
+
+        user_comment = st.text_area("**Bình luận**", placeholder="Write your comment here...", key=f"comment_input_{i}")
+        commentary = st.button("Bình luận", use_container_width=True, type='primary', key=f"comment_button_{i}")
+
+        if (commentary) and user_comment:
+                post["comments"].append(f"{st.session_state.user["fullname"]}: {user_comment}")
+                st.rerun()
