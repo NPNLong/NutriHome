@@ -9,4 +9,3 @@ def upload_ingredient_safety():
 
     result, status_code = upload_label(data)
     return jsonify(result), status_code
-

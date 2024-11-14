@@ -1,6 +1,7 @@
 from datetime import datetime
 import sqlite3
 import json
+import os
 from flask import jsonify
 
 # Connect to the SQLite database
@@ -15,27 +16,40 @@ def create_family_service(family_name, user_id, image, description):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        # Thực hiện các truy vấn ở đây
+        cursor.execute("SELECT COUNT(*) FROM families WHERE family_id = ?", (user_id,))
+        if cursor.fetchone()[0] > 0:
+            return {
+                'message': 'Family with this user_id already exists.',
+                'status': 'error'
+            }
+
         cursor.execute("""
-            INSERT INTO families (family_id, name, image, description) VALUES (?, ?, ?, ?)
+            INSERT INTO families (family_id, name, image, target_carbs, target_protein, target_fat, target_calories, description) 
+            VALUES (?, ?, ?, 0, 0, 0, 0, ?)
         """, (user_id, family_name, image, description))
+        
+        # Cập nhật family_id cho người dùng
         cursor.execute("""
             UPDATE users SET family_id = ? WHERE user_id = ?
         """, (user_id, user_id))
+        
         conn.commit()
+
         return {
             'family_id': user_id,
             'message': 'Family created successfully'
         }
+        
     except Exception as e:
         print(f"Error: {e}")
+        return {
+            'message': 'An error occurred while creating family.',
+            'error': str(e)
+        }
     finally:
         conn.close()
 
-
-
-
-def validate_member_service(family_id, inviter_id, invitee_username):
+def validate_member_service(invitee_username):
     conn = get_db_connection()
     invitee = conn.execute("""
         SELECT username, fullname AS name, avatar AS profile_image 
@@ -46,11 +60,11 @@ def validate_member_service(family_id, inviter_id, invitee_username):
     if invitee:
         return {
             'status': 'success',
-            'waiting_list': [{
+            'waiting_list': {
                 'username': invitee['username'],
                 'name': invitee['name'],
                 'profile_image': invitee['profile_image']
-            }]
+            }
         }
     else:
         return {
@@ -216,15 +230,15 @@ def get_family_missing_nutrient_service(family_id):
         }
     }
 
-def get_shopping_list_service(family_id, day):
+def get_shopping_list_service(family_id):
     conn = get_db_connection()
 
     # Truy vấn danh sách mua sắm dựa trên `family_id` và `day`
     result = conn.execute("""
         SELECT suggested_ingredients
         FROM suggested_ingredients
-        WHERE family_id = ? AND day = ?
-    """, (family_id, day)).fetchall()
+        WHERE family_id = ?
+    """, (family_id,)).fetchall()
     
     conn.close()  
     
@@ -242,3 +256,30 @@ def get_shopping_list_service(family_id, day):
         }
     else:
         return {"status": "error", "message": "No suggested ingredients found"}
+    
+def get_family_detail1(family_id):
+    if not family_id:
+        return {"status": "error", "message": "family_id is required"}
+    
+    conn = get_db_connection()
+    family_detail = conn.execute("""
+        SELECT 
+            name, 
+            description   
+        FROM families
+        WHERE family_id = ?
+    """, (family_id,)).fetchall()
+    conn.close()
+
+    if family_detail:
+        family_list = {
+            "name": family_detail[0]["name"],  # Truy cập tuple đầu tiên
+            "description": family_detail[0]["description"]
+        }
+    else:
+        family_list = []  # Nếu không có kết quả nào
+
+    return {
+        "status": "success" if family_list else "error",
+        "family_detail": family_list
+    }

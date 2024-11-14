@@ -5,8 +5,9 @@ import easyocr
 import json
 from dotenv import load_dotenv
 import requests
+from flask import request, jsonify
 # Connect to the SQLite database
-DATABASE = os.path.join(os.path.dirname(os.getcwd()), 'nutrihome3.db')
+DATABASE = os.path.join(os.path.dirname(os.getcwd()), 'nutrihome.db')
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
@@ -53,7 +54,7 @@ def get_weekly_menu_service(user_id):
         meal_data = {
             "recipe_id": meal['recipe_id'],
             "name": meal['name'],
-            "image": meal['image']
+            "image": meal['image'][11:]
         }
 
         if meal['meal'] == 'breakfast':  
@@ -65,13 +66,13 @@ def get_weekly_menu_service(user_id):
 
     conn.close()
 
-    # Định dạng lại dữ liệu cho JSON theo yêu cầu
-    ordered_weekly_menu = [{day: weekly_menu[day]} for day in weekly_menu]
+    # # Định dạng lại dữ liệu cho JSON theo yêu cầu
+    # ordered_weekly_menu = [{day: weekly_menu[day]} for day in weekly_menu]
     
     return {
         "status": "success",
         "data": {
-            "menu": ordered_weekly_menu
+            "menu": weekly_menu
         }
     }, 200
 
@@ -90,38 +91,27 @@ def get_daily_nutrition_service(user_id):
             'status': 'success',
             'data': {
                 'calories': nutrition['calories'],
-                'nutrients': {
-                    'carbs': nutrition['carbs'],
-                    'protein': nutrition['protein'],
-                    'fat': nutrition['fat']
-                }
+                'carbs': nutrition['carbs'],
+                'protein': nutrition['protein'],
+                'fat': nutrition['fat']
             }
         }, 200
     else:
         return {'status': 'error', 'message': 'Unable to load nutritional information.'}, 404
 
-def upload_receipt_service(file):
-    # Thêm logic xử lý file nếu cần, giả sử chỉ trả về mẫu dữ liệu
-    
-
-    # Khởi tạo EasyOCR reader
+def upload_receipt_service(file, user_id, meal):
     reader = easyocr.Reader(['vi'])
 
-    # Đọc và nhận dạng văn bản từ ảnh
-    image_path = 'openAI/receipt.png'
-    results = reader.readtext(image_path, detail=0) 
+    image_path = file
+    results = reader.readtext(image_path, detail=0)
 
-    all_text = ''
-    for idx, text in enumerate(results, 1):
-        all_text += text + " "
+    all_text = ' '.join(results)
 
     load_dotenv()
     API_KEY = os.getenv("GEMINI_API_KEY")
     API_URL = os.getenv("GEMINI_API_URL")
 
-    headers = {
-        'Content-Type': 'application/json',
-    }
+    headers = {'Content-Type': 'application/json'}
 
     data = {
         "contents": [
@@ -131,11 +121,8 @@ def upload_receipt_service(file):
                         "text": f"""You are given the receipt: {all_text}
                         Please list all the name of dishes. You just need to list, do not need to explain.
                         Example: 
-                        "Pho ga, 
-                        Pho, 
-                        Bun cha"
+                        ["Pho ga", "Pho", "Bun cha"]
                         """
-                
                     }
                 ]
             }
@@ -144,11 +131,65 @@ def upload_receipt_service(file):
 
     response = requests.post(API_URL, headers=headers, data=json.dumps(data), params={"key": API_KEY})
 
-    if response.status_code == 200:
-        response_data = response.json()
-        print(response_data['candidates'][0]['content']['parts'][0]['text'])
-        recipes = response_data['candidates'][0]['content']['parts'][0]['text'].split('\n')
-        print(recipes)
-    else:
+    if response.status_code != 200:
         print(f"Lỗi khi gọi API Gemini: {response.status_code}")
+        return
+
+    response_data = response.json()
+    dish_names = json.loads(response_data['candidates'][0]['content']['parts'][0]['text'])
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    list_of_food = []
+
+    for dish in dish_names:
+        cursor.execute("SELECT recipe_id, name, image FROM recipes WHERE name LIKE ?", (f"%{dish}%",))
+        recipe = cursor.fetchone()
+
+        if recipe:
+            recipe_id, name, image = recipe
+
+            list_of_food.append({
+                "recipe_id": recipe_id,
+                "name": name,
+                "image": image[11:]
+            })
+
+            today = datetime.now().date()
+            cursor.execute(
+                """
+                INSERT INTO eating_histories (user_id, recipe_id, day, meal, eaten)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (user_id, recipe_id, today, meal, 1)
+            )
+
+    conn.commit()
+    conn.close()
+
+    return {"listOfFood": list_of_food}
+
+def check_eaten():
+        data = request.json
+        user_id = data.get('user_id')
+        meal = data.get('meal')
     
+        conn = get_db_connection()
+        person = conn.execute("SELECT * FROM eating_histories WHERE user_id = ?", (user_id,)).fetchone()
+        conn.close()
+        
+        today = datetime.now().date()
+
+        if person:
+            conn = get_db_connection()
+            conn.execute("""
+            UPDATE eating_histories SET eaten = 1
+            WHERE user_id = ? AND day = ? AND meal =?
+            """, (user_id, today, meal))
+            conn.commit()
+            conn.close()
+            return jsonify({'status': 'success', 'message': 'Updated personal detail scuccessfully'}), 200 
+
+        
+        else:
+            return jsonify({'status': 'error', 'message': 'Failed to update personal detail'}), 404

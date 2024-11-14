@@ -3,11 +3,12 @@ import sqlite3
 import datetime
 import json 
 import logging
+import os
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
 
-DATABASE = 'nutrihome.db'
+DATABASE = os.path.join(os.path.dirname(os.getcwd()), 'nutrihome.db')
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
@@ -60,8 +61,10 @@ def update_personal_detail():
         height = data.get('height')
         weight = data.get('weight')
         activity_level = data.get('activity_level')
+        dob = data.get('dob')
         disease = data.get('disease')
         allergen = data.get('allergen')
+        fullname = data.get('fullname')
         conn = get_db_connection()
         person = conn.execute("SELECT user_id FROM eating_histories WHERE user_id = ?", (user_id,)).fetchone()
         conn.close()
@@ -69,9 +72,9 @@ def update_personal_detail():
         if person:
             conn = get_db_connection()
             conn.execute("""
-            UPDATE users SET height = ?, weight = ?, activity_level = ?, disease = ?, allergen = ?
+            UPDATE users SET height = ?, weight = ?, activity_level = ?, disease = ?, dob = ?, allergen = ?, fullname = ?
             WHERE user_id = ?
-            """, (height,weight,activity_level,user_id,disease,allergen))
+            """, (height,weight,activity_level,user_id,disease,dob,allergen, fullname))
             conn.commit()
             conn.close()
             return jsonify({'status': 'success', 'message': 'Updated personal detail scuccessfully'}), 200 
@@ -103,8 +106,9 @@ def show_history():
             FROM eating_histories 
             JOIN recipes 
             ON eating_histories.recipe_id = recipes.recipe_id
-            WHERE user_id = ? AND day >= date('now', '-3 days') AND eaten = 1
-            GROUP BY day, meal
+            WHERE user_id = ? 
+                AND day BETWEEN date('now', '-2 days') AND date('now')  -- Past 3 days, including today
+            GROUP BY day, meal;
             ''', (user_id,)
         ).fetchall()
         conn.close()
@@ -118,24 +122,23 @@ def show_history():
             if day not in result:
                 result[day] = {
                     "meals": {},
-                    "nutrients": {
-                        "carbs": 0,
-                        "fat": 0,
-                        "protein": 0
-                    }
+                    "carbs": 0,
+                    "fat": 0,
+                    "protein": 0,
+                    "calories": 0
                 }
             
             result[day]["meals"][row['meal']] = row['recipes'].split(',') if row['recipes'] else []
-            result[day]["nutrients"]["carbs"] += row['carbs'] or 0
-            result[day]["nutrients"]["fat"] += row['fat'] or 0
-            result[day]["nutrients"]["protein"] += row['protein'] or 0
+            result[day]["carbs"] += row['carbs'] or 0
+            result[day]["fat"] += row['fat'] or 0
+            result[day]["protein"] += row['protein'] or 0
+            result[day]["calories"] += row['calories'] or 0
 
-
-        final_result = [{day: data} for day, data in result.items()]
-        return jsonify({'status': 'success', 'data': final_result}), 200, {'Content-Type': 'application/json'}
+        # Directly return the result dictionary instead of a list
+        return jsonify({'status': 'success', 'data': result}), 200, {'Content-Type': 'application/json'}
 
     return jsonify({'status': 'error', 'message': 'User not found'}), 404
-             
+
 #Show today's nutrition history 
 def show_nutrition_today():
     data = request.json 

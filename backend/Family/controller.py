@@ -6,7 +6,8 @@ from Family.services import (
     add_all_members_service,
     get_family_health_list_service,
     get_family_missing_nutrient_service,
-    get_shopping_list_service
+    get_shopping_list_service,
+    get_family_detail1
 )
 
 family_bp = Blueprint('family', __name__)
@@ -26,11 +27,9 @@ def create_family():
 @family_bp.route('/family/health/add-member/validate', methods=['POST'])
 def validate_member():
     data = request.get_json()
-    family_id = data.get('family_id')
-    inviter_id = data.get('inviter_id')
     invitee_username = data.get('invitee_username')
     
-    result = validate_member_service(family_id, inviter_id, invitee_username)
+    result = validate_member_service(invitee_username)
     return jsonify(result)
 
 # API Thêm tất cả thành viên từ danh sách chờ vào gia đình
@@ -52,6 +51,15 @@ def get_family_health_list():
     result = get_family_health_list_service(family_id)
     return jsonify(result)
 
+# API lấy thông tin family
+@family_bp.route('/family/detail', methods=['GET'])
+def get_family_detail():
+    data = request.get_json()  
+    family_id = data.get('family_id')  
+    
+    result = get_family_detail1(family_id)
+    return jsonify(result)
+
 # API Lấy dữ liệu thiếu hụt chất dinh dưỡng của gia đình
 @family_bp.route('/family/health/missing_nutrient', methods=['GET'])
 def get_family_missing_nutrient():
@@ -69,10 +77,9 @@ def get_family_missing_nutrient():
 def get_shopping_list():
     data = request.get_json()
     family_id = data.get('family_id')
-    day = data.get('day')
 
-    if not family_id or not day:
+    if not family_id:
         return jsonify({'status': 'error', 'message': 'family_id and day are required'}), 400
 
-    result = get_shopping_list_service(family_id, day)
+    result = get_shopping_list_service(family_id)
     return jsonify(result)

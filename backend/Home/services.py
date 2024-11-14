@@ -1,5 +1,6 @@
 from datetime import datetime
 import sqlite3
+import os
 # Connect to the SQLite database
 DATABASE = os.path.join(os.path.dirname(os.getcwd()), 'nutrihome.db')
 

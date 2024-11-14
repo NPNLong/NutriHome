@@ -1,5 +1,10 @@
 from flask import Flask
-
+from flask import Flask
+from flask_cors import CORS
+from Recipes.controller  import recipes
+from Personal.controller import personal
+from Forum.controller import forum
+from Ingredient_Safety.controller import safety
 from Login_Signup.controller import auth_bp
 from Home.controller import calorie_bp
 from Weekly_menu.controller import menu_bp
@@ -11,7 +16,11 @@ def create_app():
     app.register_blueprint(calorie_bp)
     app.register_blueprint(menu_bp)
     app.register_blueprint(family_bp)
-    return app 
+    app.register_blueprint(recipes)
+    app.register_blueprint(personal)
+    app.register_blueprint(forum)
+    app.register_blueprint(safety)
+    return app
 
 
 if __name__ == "__main__":

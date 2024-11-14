@@ -171,7 +171,9 @@ def AI_shopping(final_ingredients):
                             Hãy gợi ý nguyên liệu cần mua cho thực đơn 1 tuần của gia đình, 
                             Các món ăn và nguyên liệu được liệt kê dưới dạng JSON như sau: {final_ingredients}. 
                             Yêu cầu bổ sung: 
-                            Bỏ qua các gia vị như mắm, muối, tiêu, dầu ăn, hạt nêm, tương ớt, đường, gia vị khác. 
+                            Bỏ qua các gia vị như mắm, muối, tiêu, dầu ăn, hạt nêm, tương ớt, đường, ... 
+                            Và các nguyên liệu có đơn vị là muỗng, thìa, tép tỏi, ... 
+                            Các nguyên liệu giống nhau thì gộp chung thành 1 loại nguyên liệu cần mua.  
                             Trả về kết quả dưới dạng JSON, chỉ chứa tên nguyên liệu, số lượng và đơn vị, không giải thích hay có thông tin gì thêm. 
                             Ví dụ kết quả trả về: {{ "suggested_ingredients": [ {{ "name": "Trứng", "unit": "quả", "quantity": 37 }}, {{ "name": "Cà chua", "unit": "trái", "quantity": 10 }}, {{ "name": "Hành lá", "unit": "cây", "quantity": 66 }} ] }}
                             Không cần thêm \n hoặc \t vào kết quả trả về.
@@ -233,6 +235,7 @@ def get_simple_family_meal(family_id):
     insert_family_meal_to_db(family_id, general_meal, conn)
    
     # Creating shopping list
+    delete_suggest_ingre(family_id)
     recipe_details = get_recipe_details(general_meal, conn)
     json_shopping_list = AI_shopping(recipe_details)
     
@@ -244,4 +247,14 @@ def get_simple_family_meal(family_id):
     """, (family_id, today, json.dumps(json_shopping_list)))
     conn.commit()
 
+    conn.close()
+
+def delete_suggest_ingre(family_id):
+    conn = connect_db(DATABASE)
+    cursor = conn.cursor()
+    cursor.execute(f"""
+        DELETE FROM suggested_ingredients where family_id = {family_id};
+    """)
+    conn.commit()
+    cursor.close()
     conn.close()

@@ -4,11 +4,12 @@ import datetime
 import json 
 import logging
 from datetime import datetime 
+import os
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
 
-DATABASE = 'nutrihome.db'
+DATABASE = os.path.join(os.path.dirname(os.getcwd()), 'nutrihome.db')
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row

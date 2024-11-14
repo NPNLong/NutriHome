@@ -1,6 +1,5 @@
 from flask import Blueprint, jsonify, request
-from Weekly_menu.services import get_weekly_menu_service, get_daily_nutrition_service, upload_receipt_service
-
+from Weekly_menu.services import get_weekly_menu_service, get_daily_nutrition_service, upload_receipt_service, check_eaten
 # Định nghĩa Blueprint cho các route liên quan đến weekly menu
 menu_bp = Blueprint('menu', __name__)
 
@@ -31,5 +30,9 @@ def get_daily_nutrition():
 def upload_receipt():
     data = request.get_json()
 
-    result, status_code = upload_receipt_service(data)
-    return jsonify(result), status_code
+    result = upload_receipt_service(data["image_path"], data["user_id"], data["meal"])
+    return jsonify(result)
+
+@menu_bp.route("/api/menu/eaten", methods  =['POST'])
+def eaten():
+    return check_eaten()
