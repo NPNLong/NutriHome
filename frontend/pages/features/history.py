@@ -1,49 +1,61 @@
 import streamlit as st
 import plotly.graph_objects as go
+import json
+import requests
+from datetime import datetime, timedelta
+import calendar
 
-# Khởi tạo trạng thái của nút yêu thích
-if 'favorite' not in st.session_state:
-    st.session_state.favorite = False
+BACKEND_API = "http://127.0.0.1:5000"
 
-# Đổi trạng thái khi nhấn nút
-def toggle_favorite():
-    st.session_state.favorite = not st.session_state.favorite
+#History:
+get_all_api = BACKEND_API + "/api/personal/history"
+response = requests.get(
+        get_all_api,
+        data=json.dumps(
+            {
+                "user_id": st.session_state.user["id"]
+            }
+        ),
+        headers = {'Content-Type': 'application/json',}
+    )
+print(response.status_code)
+if response.status_code == 200:
+
+        date1 = ["Today", "Yesterday", "theDayBefore"]
+        def get_last_three_dates():
+            today = datetime.now()
+            date_list = []
+            for i in range(3):
+                past_day = today - timedelta(days=i)
+                date_list.append(past_day.strftime("%Y-%m-%d"))  # Format as "Y-m-d"
+            return date_list
+
+        date2 = get_last_three_dates()
+        print(date2)
+        meal = ["Breakfast", "Lunch", "Dinner"]
+        for i, day in enumerate(date1):
+            response_day = response.json()["data"]
+            st.session_state.history[day]["Carbs"] = response_day[date2[i]]["carbs"]
+            st.session_state.history[day]["Protein"] = response_day[date2[i]]["protein"]
+            st.session_state.history[day]["Fat"] = response_day[date2[i]]["fat"]
+            st.session_state.history[day]["Calories"] = response_day[date2[i]]["calories"]
+
+            for j, meal_inf in enumerate(meal):
+                st.session_state.history[day][meal_inf]["listOfFoods"] = response_day[date2[i]]["meals"][meal_inf.lower()]
 
 # Hàm tạo các mục trong bữa ăn
 @st.dialog("Chi tiết món ăn", width="large")
-def details():
-    st.session_state.food_details = {
-        "id": 1,
-        "name": "Cơm",
-        "image": "food_images/com.jpg",
-        "rating" : 4.2,
-        "cooking_time" : 40,
-        "calories" : 2000,
-        "protein" : 150,
-        "carbs" : 200,
-        "fat" : 60,
-        "step" : """
-        - **Đong gạo**: Bạn dùng cốc đi kèm nồi cơm điện đong gạo, đong 1 cốc gạo khoảng 160gr cho 2 chén cơm.
+def details(id):
+    get_all_api = BACKEND_API + "/api/recipes/detail"
+    response = requests.get(get_all_api, data=json.dumps({"recipe_id": id}), headers = {
+        'Content-Type': 'application/json',
+    })
+    print(response.status_code)
+    print(response.json())
 
-        - **Vo gạo**: Cho nước vào nồi cơm đã có gạo, dùng tay nhẹ nhàng vo gạo rồi khuấy đều để cát bụi, vỏ trấu, sạn còn bám trên hạt gạo, chắt nước ra rồi tiếp tục chế nước sạch vào.
-
-        - **Đong nước**: Tùy loại gạo bạn nấu, và tùy bạn muốn ăn cơm nhão, khô hay vừa mà thêm nước sao cho phù hợp. Trong nồi cơm thường có nấc chia độ, cho thấy nên cho thêm bao nhiêu nước và gạo.
-
-        - **Thêm gia vị**: Để cơm được ngon hơn, thêm gia vị vào nước trước khi nấu, như 1 muỗng cà phê muối, 1/2 muỗng cà phê giấm hoặc 2 - 3 giọt dầu oliu.
-        """,
-        "ingredients" : """
-        - Gạo: 160gr (1 cốc)
-
-        - Nước: 280 ml
-
-        - Muối: 1 muỗng cà phê
-
-        - Giấm ăn: 1/2 muỗng cà phê
-        """
-    }
+    st.session_state.food_details =  response.json()["data"]
 
     st.header(st.session_state.food_details["name"], divider="grey")
-
     col1, col2 = st.columns([35,65])
 
     with col1:
@@ -71,17 +83,7 @@ def details():
                 st.write("**Đánh giá**" + ": ⭐⭐⭐⭐⭐ ")
                 st.write(f"({rating} / 5.0)")
 
-        c1, c2 = st.columns([1, 1])
-        with c1:
-            # Hiển thị nút yêu thích
-            if st.session_state.favorite:
-                if st.button("Yêu thích", on_click=toggle_favorite, type='primary', use_container_width=True):
-                    st.write("Bạn đã thích món ăn này!")
-            else:
-                if st.button("Đã yêu thích", on_click=toggle_favorite, use_container_width=True):
-                    st.write("Hãy yêu thích món ăn này!")
-        with c2:
-            rating =  st.button("Rating", use_container_width=True)
+        rating =  st.button("Rating", use_container_width=True)
         if rating:
             with st.form("Rating"):
                 sentiment_mapping = ["one", "two", "three", "four", "five"]
@@ -133,21 +135,23 @@ def details():
             st.text("")
 
             st.subheader("Nguyên liệu")
-            st.write(st.session_state.food_details["ingredients"])
+            for idx, ingredients in enumerate(st.session_state.food_details["ingredients"]):
+                st.write(f" - {ingredients["name"]} {ingredients["quantity"]} {ingredients["unit"]}")
             
             st.text("")
             
             st.subheader("Cách làm")
-            st.write(st.session_state.food_details["step"])
+            for idx, steps in enumerate(st.session_state.food_details["steps"]):
+                st.write(f" - {steps}")
             # Video
             # st.markdown("[Xem hướng dẫn chi tiết qua video](https://youtu.be/QJZUwiJhKZ0?si=IO1AvQjjiCk6GzLO)")
 
 # Hàm để hiển thị biểu đồ tròn và chi tiết dinh dưỡng
-def display_nutrition_chart(day):
+def display_nutrition_chart():
     col1, col2 = st.columns([1, 1], vertical_alignment='center')
     with col1:
         labels = ['Carbs', 'Fats', 'Protein']
-        values = [st.session_state.weekly_menu[day]["Carbs"], st.session_state.weekly_menu[day]["Fat"], st.session_state.weekly_menu[day]["Protein"]]
+        values = [st.session_state.today_nutrients["Carbs"], st.session_state.today_nutrients["Fat"], st.session_state.today_nutrients["Protein"]]
         fig = go.Figure(data=[go.Pie(labels=labels, values=values)])
         fig.update_traces(
             hoverinfo='label+percent',
@@ -169,43 +173,29 @@ def display_nutrition_chart(day):
                 st.write("Fat")
                 st.write("Protein")
             with c2:
-                st.write(f"{st.session_state.weekly_menu[day]["Calories"]} calories")
-                st.write(f"{st.session_state.weekly_menu[day]["Carbs"]} g")
-                st.write(f"{st.session_state.weekly_menu[day]["Protein"]} g")
-                st.write(f"{st.session_state.weekly_menu[day]["Fat"]} g")
+                st.write(f"{st.session_state.today_nutrients["Calories"]} calories")
+                st.write(f"{st.session_state.today_nutrients["Carbs"]} g")
+                st.write(f"{st.session_state.today_nutrients["Protein"]} g")
+                st.write(f"{st.session_state.today_nutrients["Fat"]} g")
 
 # Hàm hiển thị từng món ăn trong bữa
 def display_meal(meal, day):
-        for idx in range(0, len(st.session_state.weekly_menu[day][meal]["listOfFoods"]), 2):
+        for idx in range(0, len(st.session_state.history[day][meal]["listOfFoods"]), 2):
             c1, c2 = st.columns(2)
-            food1 = st.session_state.weekly_menu[day][meal]["listOfFoods"][idx]
+            food1 = st.session_state.history[day][meal]["listOfFoods"][idx]
             with c1:
                 with st.container(border=True):
-                    col1, col2, col3 = st.columns([20, 45, 25], vertical_alignment="center")
-                    with col1:
-                        with st.container(height=50, border=False):
-                            st.image(food1["image"], use_container_width=True)
+                    col1, col2 = st.columns([20, 45], vertical_alignment="center")
                     with col2:
-                        st.write(f"**{food1["name"]}**")
-                    with col3:
-                        # Using an f-string for the key with escaped quotes
-                        if st.button("Chi tiết", key=f"{day}_{meal}_{food1['name']}_{idx}"):
-                            details()
+                        st.write(f"**{food1}**")
 
-            if idx + 1 < len(st.session_state.weekly_menu[day][meal]["listOfFoods"]):
-                food2 = st.session_state.weekly_menu[day][meal]["listOfFoods"][idx + 1]
+            if idx + 1 < len(st.session_state.history[day][meal]["listOfFoods"]):
+                food2 = st.session_state.history[day][meal]["listOfFoods"][idx + 1]
                 with c2:
                     with st.container(border=True):
-                        col1, col2, col3 = st.columns([20, 45, 25], vertical_alignment="center")
-                        with col1:
-                            with st.container(height=50, border=False):
-                                st.image(food2["image"], use_container_width=True)
+                        col1, col2 = st.columns([20, 45], vertical_alignment="center")
                         with col2:
-                            st.write(f"**{food2["name"]}**")
-                        with col3:
-                            # Using an f-string for the key with escaped quotes
-                            if st.button("Chi tiết", key=f"{day}_{meal}_{food2['name']}_{idx + 1}"):
-                                details()
+                            st.write(f"**{food2}**")
 
 st.title("History")
 st.write("NutriHome cung cấp tính năng ghi lại mọi món ăn trong ngày, bao gồm bữa chính tại nhà, bữa ăn ngoài và món ăn vặt. Người dùng có thể dễ dàng theo dõi chế độ ăn uống của mình bằng cách nhập dữ liệu hoặc chụp hóa đơn, giúp người dùng nắm bắt tình trạng dinh dưỡng và điều chỉnh thói quen ăn uống cho phù hợp với sức khỏe của từng thành viên trong gia đình.")
@@ -240,3 +230,62 @@ st.plotly_chart(fig)
 
 st.text('')
 st.subheader("Lịch sử ăn uống", divider="gray")
+
+tab1, tab2, tab3 = st.tabs(["**Hôm nay**", "**Hôm qua**", "**Hôm kia**"])
+
+with tab1:
+    # with st.expander("**Tổng lượng dưỡng chất từ bữa ăn**"):
+    #     display_nutrition_chart("Today")
+        
+    st.header("Bạn đã ăn:")
+    breakFast, lunch, dinner = st.tabs(["Bữa sáng", "Bữa trưa", "Bữa tối"])
+
+    with breakFast:
+        st.subheader("Bữa sáng:")
+        display_meal("Breakfast", "Today")
+                        
+    with lunch:
+        st.subheader("Bữa trưa:")
+        display_meal("Lunch", "Today")
+
+    with dinner:
+        st.subheader("Bữa tối:")
+        display_meal("Dinner", "Today")
+
+with tab2:
+    # with st.expander("**Tổng lượng dưỡng chất từ bữa ăn**"):
+    #     display_nutrition_chart("Yesterday")
+        
+    st.header("Bạn đã ăn:")
+    breakFast, lunch, dinner = st.tabs(["Bữa sáng", "Bữa trưa", "Bữa tối"])
+
+    with breakFast:
+        st.subheader("Bữa sáng:")
+        display_meal("Breakfast", "Yesterday")
+                        
+    with lunch:
+        st.subheader("Bữa trưa:")
+        display_meal("Lunch", "Yesterday")
+
+    with dinner:
+        st.subheader("Bữa tối:")
+        display_meal("Dinner", "Yesterday")
+
+with tab3:
+    # with st.expander("**Tổng lượng dưỡng chất từ bữa ăn**"):
+    #     display_nutrition_chart("theDayBefore")
+        
+    st.header("Bạn đã ăn:")
+    breakFast, lunch, dinner = st.tabs(["Bữa sáng", "Bữa trưa", "Bữa tối"])
+
+    with breakFast:
+        st.subheader("Bữa sáng:")
+        display_meal("Breakfast", "theDayBefore")
+                        
+    with lunch:
+        st.subheader("Bữa trưa:")
+        display_meal("Lunch", "theDayBefore")
+
+    with dinner:
+        st.subheader("Bữa tối:")
+        display_meal("Dinner", "theDayBefore")

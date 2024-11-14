@@ -2,50 +2,62 @@ import streamlit as st
 import plotly.graph_objects as go
 from PIL import Image
 import os
+import json
+import requests
 
-# Khởi tạo trạng thái của nút yêu thích
-if 'favorite' not in st.session_state:
-    st.session_state.favorite = False
+BACKEND_API = "http://127.0.0.1:5000"
 
-# Đổi trạng thái khi nhấn nút
-def toggle_favorite():
-    st.session_state.favorite = not st.session_state.favorite
+#Weekly menu:
+get_all_api = BACKEND_API + "/api/weekly_menu"
+response = requests.get(
+        get_all_api,
+        data=json.dumps(
+            {
+                "user_id": st.session_state.user["id"]
+            }
+        ),
+        headers = {'Content-Type': 'application/json',}
+    )
+print(response.status_code)
+if response.status_code == 200:
+        date1 = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        date2 = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+        meal = ["Breakfast", "Lunch", "Dinner"]
+        for i, day in enumerate(date1):
+            for j, meal_type in enumerate(meal):
+                st.session_state.weekly_menu[day][meal_type]["listOfFoods"] = response.json()["data"]["menu"][date2[i]][meal_type.lower()]
+
+# Tổng calo trong ngày
+get_all_api = BACKEND_API + "/api/weekly_menu/calories"
+response = requests.get(
+        get_all_api,
+        data=json.dumps(
+            {
+                "user_id": st.session_state.user["id"]
+            }
+        ),
+        headers = {'Content-Type': 'application/json',}
+    )
+print(response.status_code)
+if response.status_code == 200:
+    st.session_state.today_nutrients["Carbs"] = response.json()["data"]["carbs"]
+    st.session_state.today_nutrients["Protein"] = response.json()["data"]["protein"]
+    st.session_state.today_nutrients["Fat"] = response.json()["data"]["fat"]
+    st.session_state.today_nutrients["Calories"] = response.json()["data"]["calories"]
 
 # Hàm tạo các mục trong bữa ăn
 @st.dialog("Chi tiết món ăn", width="large")
-def details():
-    st.session_state.food_details = {
-        "id": 1,
-        "name": "Cơm",
-        "image": "food_images/com.jpg",
-        "rating" : 4.2,
-        "cooking_time" : 40,
-        "calories" : 2000,
-        "protein" : 150,
-        "carbs" : 200,
-        "fat" : 60,
-        "step" : """
-        - **Đong gạo**: Bạn dùng cốc đi kèm nồi cơm điện đong gạo, đong 1 cốc gạo khoảng 160gr cho 2 chén cơm.
+def details(id):
+    get_all_api = BACKEND_API + "/api/recipes/detail"
+    response = requests.get(get_all_api, data=json.dumps({"recipe_id": id}), headers = {
+        'Content-Type': 'application/json',
+    })
+    print(response.status_code)
+    print(response.json())
 
-        - **Vo gạo**: Cho nước vào nồi cơm đã có gạo, dùng tay nhẹ nhàng vo gạo rồi khuấy đều để cát bụi, vỏ trấu, sạn còn bám trên hạt gạo, chắt nước ra rồi tiếp tục chế nước sạch vào.
-
-        - **Đong nước**: Tùy loại gạo bạn nấu, và tùy bạn muốn ăn cơm nhão, khô hay vừa mà thêm nước sao cho phù hợp. Trong nồi cơm thường có nấc chia độ, cho thấy nên cho thêm bao nhiêu nước và gạo.
-
-        - **Thêm gia vị**: Để cơm được ngon hơn, thêm gia vị vào nước trước khi nấu, như 1 muỗng cà phê muối, 1/2 muỗng cà phê giấm hoặc 2 - 3 giọt dầu oliu.
-        """,
-        "ingredients" : """
-        - Gạo: 160gr (1 cốc)
-
-        - Nước: 280 ml
-
-        - Muối: 1 muỗng cà phê
-
-        - Giấm ăn: 1/2 muỗng cà phê
-        """
-    }
+    st.session_state.food_details =  response.json()["data"]
 
     st.header(st.session_state.food_details["name"], divider="grey")
-
     col1, col2 = st.columns([35,65])
 
     with col1:
@@ -73,17 +85,7 @@ def details():
                 st.write("**Đánh giá**" + ": ⭐⭐⭐⭐⭐ ")
                 st.write(f"({rating} / 5.0)")
 
-        c1, c2 = st.columns([1, 1])
-        with c1:
-            # Hiển thị nút yêu thích
-            if st.session_state.favorite:
-                if st.button("Yêu thích", on_click=toggle_favorite, type='primary', use_container_width=True):
-                    st.write("Bạn đã thích món ăn này!")
-            else:
-                if st.button("Đã yêu thích", on_click=toggle_favorite, use_container_width=True):
-                    st.write("Hãy yêu thích món ăn này!")
-        with c2:
-            rating =  st.button("Rating", use_container_width=True)
+        rating =  st.button("Rating", use_container_width=True)
         if rating:
             with st.form("Rating"):
                 sentiment_mapping = ["one", "two", "three", "four", "five"]
@@ -135,17 +137,19 @@ def details():
             st.text("")
 
             st.subheader("Nguyên liệu")
-            st.write(st.session_state.food_details["ingredients"])
+            for idx, ingredients in enumerate(st.session_state.food_details["ingredients"]):
+                st.write(f" - {ingredients["name"]} {ingredients["quantity"]} {ingredients["unit"]}")
             
             st.text("")
             
             st.subheader("Cách làm")
-            st.write(st.session_state.food_details["step"])
+            for idx, steps in enumerate(st.session_state.food_details["steps"]):
+                st.write(f" - {steps}")
             # Video
             # st.markdown("[Xem hướng dẫn chi tiết qua video](https://youtu.be/QJZUwiJhKZ0?si=IO1AvQjjiCk6GzLO)")
 
 @st.dialog("Quét hóa đơn")
-def billScanning():
+def billScanning(day, meal_type):
     uploaded_image = st.file_uploader("Hóa đơn", type=["jpg", "jpeg", "png"])
     if uploaded_image is not None:
         image = Image.open(uploaded_image).convert("RGB")
@@ -158,15 +162,29 @@ def billScanning():
         avatar_path = os.path.join(bill_dir, "bill.jpg")
         avatar_image = Image.open(uploaded_image)
         avatar_image.convert("RGB").save(avatar_path, "JPEG")
-        st.session_state.user["avatar"] = avatar_path
+        get_all_api = BACKEND_API + "/api/weekly_menu/upload"
+        response = requests.post(
+                get_all_api,
+                data=json.dumps(
+                    {
+                        "user_id": f"{st.session_state.user["id"]}",
+                        "image_path" :f"C:/Users/Admin/Desktop/NutriHome/frontend/images/bills/{st.session_state.user["username"]}/bill.jpg",
+                        "meal": meal_type.lower()
+                    }
+                ),
+                headers = {'Content-Type': 'application/json',}
+            )
+        print(response.status_code)
+        if response.status_code == 200:
+            st.session_state.weekly_menu[day][meal_type]["listOfFoods"].extend(response.json()["listOfFood"])
         st.rerun()
 
 # Hàm để hiển thị biểu đồ tròn và chi tiết dinh dưỡng
-def display_nutrition_chart(day):
+def display_nutrition_chart():
     col1, col2 = st.columns([1, 1], vertical_alignment='center')
     with col1:
         labels = ['Carbs', 'Fats', 'Protein']
-        values = [st.session_state.weekly_menu[day]["Carbs"], st.session_state.weekly_menu[day]["Fat"], st.session_state.weekly_menu[day]["Protein"]]
+        values = [st.session_state.today_nutrients["Carbs"], st.session_state.today_nutrients["Fat"], st.session_state.today_nutrients["Protein"]]
         fig = go.Figure(data=[go.Pie(labels=labels, values=values)])
         fig.update_traces(
             hoverinfo='label+percent',
@@ -188,10 +206,10 @@ def display_nutrition_chart(day):
                 st.write("Fat")
                 st.write("Protein")
             with c2:
-                st.write(f"{st.session_state.weekly_menu[day]["Calories"]} calories")
-                st.write(f"{st.session_state.weekly_menu[day]["Carbs"]} g")
-                st.write(f"{st.session_state.weekly_menu[day]["Protein"]} g")
-                st.write(f"{st.session_state.weekly_menu[day]["Fat"]} g")
+                st.write(f"{st.session_state.today_nutrients["Calories"]} calories")
+                st.write(f"{st.session_state.today_nutrients["Carbs"]} g")
+                st.write(f"{st.session_state.today_nutrients["Protein"]} g")
+                st.write(f"{st.session_state.today_nutrients["Fat"]} g")
 
 # Hàm hiển thị từng món ăn trong bữa
 def display_meal(meal, day):
@@ -209,7 +227,7 @@ def display_meal(meal, day):
                     with col3:
                         # Using an f-string for the key with escaped quotes
                         if st.button("Chi tiết", key=f"{day}_{meal}_{food1['name']}_{idx}"):
-                            details()
+                            details(food1["recipe_id"])
 
             if idx + 1 < len(st.session_state.weekly_menu[day][meal]["listOfFoods"]):
                 food2 = st.session_state.weekly_menu[day][meal]["listOfFoods"][idx + 1]
@@ -224,11 +242,13 @@ def display_meal(meal, day):
                         with col3:
                             # Using an f-string for the key with escaped quotes
                             if st.button("Chi tiết", key=f"{day}_{meal}_{food2['name']}_{idx + 1}"):
-                                details()
+                                details(food2["recipe_id"])
 
 st.title("Weekly Menu")
 st.write("NutriHome cung cấp tính năng xây dựng thực đơn cá nhân hóa hàng tuần dựa trên dữ liệu như chiều cao, cân nặng, và tình trạng sức khỏe của cá nhân. Hệ thống sử dụng dữ liệu dinh dưỡng đáng tin cậy từ USDA Food Data Central, giúp đảm bảo sự chính xác về hàm lượng dinh dưỡng trong các món ăn.")
 
+with st.expander("**Tổng lượng dưỡng chất từ bữa ăn**"):
+    display_nutrition_chart()
 # Tên các ngày trong tuần
 days_of_week = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"]
 
@@ -251,60 +271,43 @@ for day, day_tab in zip(days_of_week, tabs):
         day = "Saturday"
     elif day == "Chủ Nhật":
         day = "Sunday"
+
     with day_tab:
-        with st.expander("**Tổng lượng dưỡng chất từ bữa ăn**"):
-            display_nutrition_chart(day)
-        
+        col1, col2 = st.columns([50, 50])
+        with col1:
+                        if st.session_state.weekly_menu[st.session_state.day_of_week][st.session_state.meal]["eaten"] == 0:
+                            if st.button("Đã ăn bữa này", key=f"eaten{day}", type='primary', use_container_width=True):
+                                get_all_api = BACKEND_API + "/api/menu/eaten"
+                                response = requests.post(
+                                        get_all_api,
+                                        data=json.dumps(
+                                            {
+                                                "user_id": f"{st.session_state.user["id"]}",
+                                                "meal": st.session_state.meal.lower()
+                                            }
+                                        ),
+                                        headers = {'Content-Type': 'application/json',}
+                                    )
+                                print(response.status_code)
+                                if response.status_code == 200:
+                                    st.session_state.weekly_menu[st.session_state.day_of_week][st.session_state.meal]["eaten"] = 1
+                                    st.rerun()
+                        else:
+                            st.button("Đã ăn bữa này", key=f"eaten{day}", use_container_width=True, disabled=True)
+        with col2:
+                        if st.button("Quét hóa đơn cho bữa này", key=f"Scan_Bill{day}", use_container_width=True):
+                            billScanning(st.session_state.day_of_week, st.session_state.meal)    
         st.header("Thực đơn của gia đình bạn là:")
         breakFast, lunch, dinner = st.tabs(["Bữa sáng", "Bữa trưa", "Bữa tối"])
 
         with breakFast:
             st.subheader("Bữa sáng:")
             display_meal("Breakfast", day)
-            col1, col2, col3 = st.columns([25, 25, 50])
-            with col1:
-                if st.session_state.weekly_menu[day]["Breakfast"]["eaten"] == False:
-                    if st.button("Đã ăn", key=f"Breakfast_{day}", type='primary', use_container_width=True):
-                        st.session_state.weekly_menu[day]["Breakfast"]["eaten"] = True
-                        st.rerun()
-                else:
-                    if st.button("Đã ăn", key=f"Breakfast_{day}", use_container_width=True):
-                        st.session_state.weekly_menu[day]["Breakfast"]["eaten"] = False
-                        st.rerun()
-            with col2:
-                if st.button("Quét hóa đơn", key=f"Scan_Breakfast_{day}", use_container_width=True):
-                    billScanning()
                         
         with lunch:
             st.subheader("Bữa trưa:")
             display_meal("Lunch", day)
-            col1, col2, col3 = st.columns([25, 25, 50])
-            with col1:
-                if st.session_state.weekly_menu[day]["Lunch"]["eaten"] == False:
-                    if st.button("Đã ăn", key=f"Lunch_{day}", type='primary', use_container_width=True):
-                        st.session_state.weekly_menu[day]["Lunch"]["eaten"] = True
-                        st.rerun()
-                else:
-                    if st.button("Đã ăn", key=f"Lunch_{day}", use_container_width=True):
-                        st.session_state.weekly_menu[day]["Lunch"]["eaten"] = False
-                        st.rerun()
-            with col2:
-                if st.button("Quét hóa đơn", key=f"Scan_Lunch_{day}", use_container_width=True):
-                    billScanning()
 
         with dinner:
             st.subheader("Bữa tối:")
             display_meal("Dinner", day)
-            col1, col2, col3 = st.columns([25, 25, 50])
-            with col1:
-                if st.session_state.weekly_menu[day]["Dinner"]["eaten"] == False:
-                    if st.button("Đã ăn", key=f"Dinner_{day}", type='primary', use_container_width=True):
-                        st.session_state.weekly_menu[day]["Dinner"]["eaten"] = True
-                        st.rerun()
-                else:
-                    if st.button("Đã ăn", key=f"Breakfast_{day}", use_container_width=True):
-                        st.session_state.weekly_menu[day]["Dinner"]["eaten"] = False
-                        st.rerun()
-            with col2:
-                if st.button("Quét hóa đơn", key=f"Scan_Dinner_{day}", use_container_width=True):
-                    billScanning()

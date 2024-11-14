@@ -29,7 +29,7 @@ def addNewPost():
                 "title": title,
                 "content": description,
                 "image": image,
-                "created_at": datetime.now(pytz.timezone("Asia/Bangkok")).strftime("%d-%m-%Y %H:%M:%S"),
+                "created_at": datetime.now(pytz.timezone("Asia/Bangkok")).strftime("%Y-%m-%d %H:%M:%S"),
                 "react": False,
                 "total_reacts": 0,
                 "comments": []
@@ -74,7 +74,7 @@ with col1:
 
 st.session_state.posts = sorted(
     st.session_state.posts,
-    key=lambda post: datetime.strptime(post["created_at"], "%d-%m-%Y %H:%M:%S"),
+    key=lambda post: datetime.strptime(post["created_at"], "%Y-%m-%d %H:%M:%S"),
     reverse=True
 )
 

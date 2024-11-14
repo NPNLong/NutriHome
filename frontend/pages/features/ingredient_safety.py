@@ -1,10 +1,15 @@
 import streamlit as st
 from PIL import Image
 import os
+import requests
+import json
+
+BACKEND_API = "http://127.0.0.1:5000"
+    
 
 # Allergen
 if "Allergen" not in st.session_state:
-    st.session_state.Allergen = []
+    st.session_state.Allergen = ""
 
 st.title("Ingredient Safety")
 st.write("Feature's description")
@@ -30,8 +35,21 @@ with col1:
                 avatar_path = os.path.join(is_dir, "ingredients.jpg")
                 avatar_image = Image.open(uploaded_image)
                 avatar_image.convert("RGB").save(avatar_path, "JPEG")
-            st.session_state.user["avatar"] = avatar_path
-            st.session_state.Allergen.extend([1, 2, 3])
+
+            get_all_api = BACKEND_API + "/api/ingredient_safety"
+            response = requests.post(
+                    get_all_api,
+                    data=json.dumps(
+                        {
+                            "user_id": f"{st.session_state.user["id"]}",
+                            "image_path": f"C:/Users/Admin/Desktop/NutriHome/frontend/images/ingredient_safety/{st.session_state.user["username"]}/ingredients.jpg"
+                        }
+                    ),
+                    headers = {'Content-Type': 'application/json',}
+                )
+            print(response.status_code)
+            if response.status_code == 200:
+                st.session_state.Allergen = response.json()
             st.rerun()
 
 with col2:
@@ -40,5 +58,4 @@ with col2:
         if len(st.session_state.Allergen) == 0:
             st.warning("Hãy nhập vào danh sách nguyên liệu")
         else:
-            for allergen in st.session_state.Allergen:
-                st.write("- " + f"{allergen}")
+            st.write(f"{st.session_state.Allergen}")

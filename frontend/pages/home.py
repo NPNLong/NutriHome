@@ -1,10 +1,10 @@
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
+import json
+import requests
 
-# Khởi tạo trạng thái của nút yêu thích
-if 'favorite' not in st.session_state:
-    st.session_state.favorite = False
+BACKEND_API = "http://127.0.0.1:5000"
 
 # Đổi trạng thái khi nhấn nút
 def toggle_favorite():
@@ -12,39 +12,17 @@ def toggle_favorite():
 
 # Hàm tạo các mục trong bữa ăn
 @st.dialog("Chi tiết món ăn", width="large")
-def details():
-    st.session_state.food_details = {
-        "id": 1,
-        "name": "Cơm",
-        "image": "food_images/com.jpg",
-        "rating" : 4.2,
-        "cooking_time" : 40,
-        "calories" : 2000,
-        "protein" : 150,
-        "carbs" : 200,
-        "fat" : 60,
-        "step" : """
-        - **Đong gạo**: Bạn dùng cốc đi kèm nồi cơm điện đong gạo, đong 1 cốc gạo khoảng 160gr cho 2 chén cơm.
+def details(id):
+    get_all_api = BACKEND_API + "/api/recipes/detail"
+    response = requests.get(get_all_api, data=json.dumps({"recipe_id": id}), headers = {
+        'Content-Type': 'application/json',
+    })
+    print(response.status_code)
+    print(response.json())
 
-        - **Vo gạo**: Cho nước vào nồi cơm đã có gạo, dùng tay nhẹ nhàng vo gạo rồi khuấy đều để cát bụi, vỏ trấu, sạn còn bám trên hạt gạo, chắt nước ra rồi tiếp tục chế nước sạch vào.
-
-        - **Đong nước**: Tùy loại gạo bạn nấu, và tùy bạn muốn ăn cơm nhão, khô hay vừa mà thêm nước sao cho phù hợp. Trong nồi cơm thường có nấc chia độ, cho thấy nên cho thêm bao nhiêu nước và gạo.
-
-        - **Thêm gia vị**: Để cơm được ngon hơn, thêm gia vị vào nước trước khi nấu, như 1 muỗng cà phê muối, 1/2 muỗng cà phê giấm hoặc 2 - 3 giọt dầu oliu.
-        """,
-        "ingredients" : """
-        - Gạo: 160gr (1 cốc)
-
-        - Nước: 280 ml
-
-        - Muối: 1 muỗng cà phê
-
-        - Giấm ăn: 1/2 muỗng cà phê
-        """
-    }
+    st.session_state.food_details =  response.json()["data"]
 
     st.header(st.session_state.food_details["name"], divider="grey")
-
     col1, col2 = st.columns([35,65])
 
     with col1:
@@ -72,17 +50,7 @@ def details():
                 st.write("**Đánh giá**" + ": ⭐⭐⭐⭐⭐ ")
                 st.write(f"({rating} / 5.0)")
 
-        c1, c2 = st.columns([1, 1])
-        with c1:
-            # Hiển thị nút yêu thích
-            if st.session_state.favorite:
-                if st.button("Yêu thích", on_click=toggle_favorite, type='primary', use_container_width=True):
-                    st.write("Bạn đã thích món ăn này!")
-            else:
-                if st.button("Đã yêu thích", on_click=toggle_favorite, use_container_width=True):
-                    st.write("Hãy yêu thích món ăn này!")
-        with c2:
-            rating =  st.button("Rating", use_container_width=True)
+        rating =  st.button("Rating", use_container_width=True)
         if rating:
             with st.form("Rating"):
                 sentiment_mapping = ["one", "two", "three", "four", "five"]
@@ -134,12 +102,14 @@ def details():
             st.text("")
 
             st.subheader("Nguyên liệu")
-            st.write(st.session_state.food_details["ingredients"])
+            for idx, ingredients in enumerate(st.session_state.food_details["ingredients"]):
+                st.write(f" - {ingredients["name"]} {ingredients["quantity"]} {ingredients["unit"]}")
             
             st.text("")
             
             st.subheader("Cách làm")
-            st.write(st.session_state.food_details["step"])
+            for idx, steps in enumerate(st.session_state.food_details["steps"]):
+                st.write(f" - {steps}")
             # Video
             # st.markdown("[Xem hướng dẫn chi tiết qua video](https://youtu.be/QJZUwiJhKZ0?si=IO1AvQjjiCk6GzLO)")
 
@@ -161,7 +131,7 @@ def display_meal(meal, day):
                 with col3:
                     # Using an f-string for the key with escaped quotes
                     if st.button("Chi tiết", key=f"{day}_{meal}_{food1['name']}_{idx}"):
-                        details()
+                        details(food1["recipe_id"])
 
         # Second food item in the current pair (idx + 1), if it exists
         if idx + 1 < len(st.session_state.weekly_menu[day][meal]["listOfFoods"]):
@@ -177,9 +147,53 @@ def display_meal(meal, day):
                     with col3:
                         # Using an f-string for the key with escaped quotes
                         if st.button("Chi tiết", key=f"{day}_{meal}_{food2['name']}_{idx + 1}"):
-                            details()
+                            details(food2["recipe_id"])
 
 if st.session_state.logged_in:
+
+    #Chart
+    get_all_api = BACKEND_API + "/api/home/chart"
+    response = requests.get(
+        get_all_api,
+        data=json.dumps(
+            {
+                "user_id": st.session_state.user["id"]
+            }
+        ),
+        headers = {'Content-Type': 'application/json',}
+    )
+    print(response.status_code)
+    if response.status_code == 200:
+        st.session_state.user["absorbed_carbs"] = response.json()["data"]["chart"]["absorbedCarbs"]
+        st.session_state.user["absorbed_protein"] = response.json()["data"]["chart"]["absorbedProtein"]
+        st.session_state.user["absorbed_fat"] = response.json()["data"]["chart"]["absorbedFat"]
+        st.session_state.user["absorbed_calories"] = response.json()["data"]["chart"]["absorbedCalories"]
+        st.session_state.user["target_carbs"] = response.json()["data"]["chart"]["goalCarbs"]
+        st.session_state.user["target_protein"] = response.json()["data"]["chart"]["goalProtein"]
+        st.session_state.user["target_fat"] = response.json()["data"]["chart"]["goalFat"]
+        st.session_state.user["target_calories"] = response.json()["data"]["chart"]["goalCalories"]
+
+    #Weekly menu:
+    get_all_api = BACKEND_API + "/api/weekly_menu"
+    response = requests.get(
+        get_all_api,
+        data=json.dumps(
+            {
+                "user_id": st.session_state.user["id"]
+            }
+        ),
+        headers = {'Content-Type': 'application/json',}
+    )
+    print(response.status_code)
+    if response.status_code == 200:
+        date1 = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        date2 = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+        meal = ["Breakfast", "Lunch", "Dinner"]
+        for i, day in enumerate(date1):
+            for j, meal_type in enumerate(meal):
+                st.session_state.weekly_menu[day][meal_type]["listOfFoods"] = response.json()["data"]["menu"][date2[i]][meal_type.lower()]
+
+        
 
     st.title(f"Chào mừng {st.session_state.user["fullname"]}! Hôm nay bạn muốn ăn gì?")
     st.text("")

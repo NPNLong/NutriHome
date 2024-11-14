@@ -42,11 +42,14 @@ if "user" not in st.session_state:
         "fullname": "",
         "username": "",
         "avatar": "",  # Path to user avatar image
-        "dob": datetime(2000, 1, 1).strftime("%d-%m-%Y"),  # Date of birth
+        "dob": "",  # Date of birth
+        "age": 0,
         "gender": "",  # User's gender
         "height": 0,  # Height in cm
         "weight": 0,  # Weight in kg
-        "bmi": 0.0,  # Body Mass Index, initially set to 0
+        "bmi": 0.0,
+        "disease": "",
+        "allergen": "",
         "activity_level": "",  # Activity level of the user
         "absorbed_carbs": 0,
         "absorbed_protein": 0,
@@ -62,17 +65,16 @@ if "user" not in st.session_state:
 #Food details (Show food details)
 if "food_details" not in st.session_state:
     st.session_state.food_details = {
-        "id": 0,
         "name" : "",
         "image" : "",
-        "rating" : 0,
+        "rating" : 0.0,
         "cooking_time" : 0,
         "calories" : 0,
         "protein" : 0,
         "carbs" : 0,
         "fat" : 0,
-        "step" : "",
-        "ingredients" : ""
+        "steps" : [],
+        "ingredients" : []
     }
 
 #Weekly menu (Show weekly menu)
@@ -80,34 +82,16 @@ if "weekly_menu" not in st.session_state:
     st.session_state.weekly_menu = {
         "Monday": {
             "Breakfast": {
-                "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
-                ],
-                "eaten": False,
+                "listOfFoods": [],
+                "eaten": 0, #Sua thanh 0, 1
             },
             "Lunch": {
-                "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
-                ],
-                "eaten": False,
+                "listOfFoods": [],
+                "eaten": 0,
             },
             "Dinner": {
-                "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
-                ],
-                "eaten": False,
+                "listOfFoods": [],
+                "eaten": 0,
             },
             "Carbs": 0,
             "Protein": 0,
@@ -116,34 +100,16 @@ if "weekly_menu" not in st.session_state:
         },
         "Tuesday": {
             "Breakfast": {
-                "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
-                ],
-                "eaten": False,
+                "listOfFoods": [],
+                "eaten": 0,
             },
             "Lunch": {
-                "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
-                ],
-                "eaten": False,
+                "listOfFoods": [],
+                "eaten": 0,
             },
             "Dinner": {
-                "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
-                ],
-                "eaten": False,
+                "listOfFoods": [],
+                "eaten": 0,
             },
             "Carbs": 0,
             "Protein": 0,
@@ -152,34 +118,16 @@ if "weekly_menu" not in st.session_state:
         },
         "Wednesday": {
             "Breakfast": {
-                "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
-                ],
-                "eaten": False,
+                "listOfFoods": [],
+                "eaten": 0,
             },
             "Lunch": {
-                "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
-                ],
-                "eaten": False,
+                "listOfFoods": [],
+                "eaten": 0,
             },
             "Dinner": {
-                "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
-                ],
-                "eaten": False,
+                "listOfFoods": [],
+                "eaten": 0,
             },
             "Carbs": 0,
             "Protein": 0,
@@ -188,34 +136,16 @@ if "weekly_menu" not in st.session_state:
         },
         "Thursday": {
             "Breakfast": {
-                "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
-                ],
-                "eaten": False,
+                "listOfFoods": [],
+                "eaten": 0,
             },
             "Lunch": {
-                "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
-                ],
-                "eaten": False,
+                "listOfFoods": [],
+                "eaten": 0,
             },
             "Dinner": {
-                "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
-                ],
-                "eaten": False,
+                "listOfFoods": [],
+                "eaten": 0,
             },
             "Carbs": 0,
             "Protein": 0,
@@ -224,34 +154,16 @@ if "weekly_menu" not in st.session_state:
         },
         "Friday": {
             "Breakfast": {
-                "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
-                ],
-                "eaten": False,
+                "listOfFoods": [],
+                "eaten": 0,
             },
             "Lunch": {
-                "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
-                ],
-                "eaten": False,
+                "listOfFoods": [],
+                "eaten": 0,
             },
             "Dinner": {
-                "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
-                ],
-                "eaten": False,
+                "listOfFoods": [],
+                "eaten": 0,
             },
             "Carbs": 0,
             "Protein": 0,
@@ -260,34 +172,16 @@ if "weekly_menu" not in st.session_state:
         },
         "Saturday": {
             "Breakfast": {
-                "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
-                ],
-                "eaten": False,
+                "listOfFoods": [],
+                "eaten": 0,
             },
             "Lunch": {
-                "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
-                ],
-                "eaten": False,
+                "listOfFoods": [],
+                "eaten": 0,
             },
             "Dinner": {
-                "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
-                ],
-                "eaten": False,
+                "listOfFoods": [],
+                "eaten": 0,
             },
             "Carbs": 0,
             "Protein": 0,
@@ -296,34 +190,16 @@ if "weekly_menu" not in st.session_state:
         },
         "Sunday": {
             "Breakfast": {
-                "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
-                ],
-                "eaten": False,
+                "listOfFoods": [],
+                "eaten": 0,
             },
             "Lunch": {
-                "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
-                ],
-                "eaten": False,
+                "listOfFoods": [],
+                "eaten": 0,
             },
             "Dinner": {
-                "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
-                ],
-                "eaten": False,
+                "listOfFoods": [],
+                "eaten": 0,
             },
             "Carbs": 0,
             "Protein": 0,
@@ -332,39 +208,35 @@ if "weekly_menu" not in st.session_state:
         }
     }
 
+if "today_nutrients" not in st.session_state:
+    st.session_state.today_nutrients = {
+        "Carbs": 0,
+        "Protein": 0,
+        "Fat": 0,
+        "Calories": 0
+    }
+
 #History
 if "history" not in st.session_state:
     st.session_state.history = {
         "Today": {
             "Breakfast": {
                 "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
+
                 ],
-                "eaten": False,
+                "eaten": 0,
             },
             "Lunch": {
                 "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
+
                 ],
-                "eaten": False,
+                "eaten": 0,
             },
             "Dinner": {
                 "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
+ 
                 ],
-                "eaten": False,
+                "eaten": 0,
             },
             "Date": "",
             "Carbs": 0,
@@ -375,33 +247,21 @@ if "history" not in st.session_state:
         "Yesterday": {
             "Breakfast": {
                 "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
+
                 ],
-                "eaten": False,
+                "eaten": 0,
             },
             "Lunch": {
                 "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
+
                 ],
-                "eaten": False,
+                "eaten": 0,
             },
             "Dinner": {
                 "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
+
                 ],
-                "eaten": False,
+                "eaten": 0,
             },
             "Date": "",
             "Carbs": 0,
@@ -412,33 +272,21 @@ if "history" not in st.session_state:
         "theDayBefore": {
             "Breakfast": {
                 "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
+
                 ],
-                "eaten": False,
+                "eaten": 0,
             },
             "Lunch": {
                 "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
+ 
                 ],
-                "eaten": False,
+                "eaten": 0,
             },
             "Dinner": {
                 "listOfFoods": [
-                    { 
-                        "id": 0,
-                        "name": "",
-                        "image": ""
-                    },
+
                 ],
-                "eaten": False,
+                "eaten": 0,
             },
             "Date": "",
             "Carbs": 0,
@@ -462,14 +310,9 @@ if "searchingList" not in st.session_state:
 
 # Add Member
 if "addMember" not in st.session_state:
-    st.session_state.addMember = [
-        {
-            "id": 0,
-            "username": "",
-            "fullname": "",
-            "avatar": "",  # Path to user avatar image
-        },
-    ]
+    st.session_state.addMember = []
+if "addMemberUsername" not in st.session_state:
+    st.session_state.addMemberUsername = []
 
 # Family
 if "family" not in st.session_state:
@@ -477,22 +320,21 @@ if "family" not in st.session_state:
         "id": 0,
         "name": "",
         "avatar": "family_images/nutrihome_avatar.jpg",
-        "memberCount": 0,
         "description": "",
         "member": [
             {
-                "id": 0,
+                "user_id": 0,
                 "username": "",
-                "fullname": "",
-                "avatar": "",  # Path to user avatar image
-                "absorbed_carbs": 0,
-                "absorbed_protein": 0,
-                "absorbed_fat": 0,
-                "absorbed_calories": 0,
-                "target_carbs": 0,  # Daily target carbohydrates in grams
-                "target_protein": 0,  # Daily target protein in grams
-                "target_fat": 0,  # Daily target fat in grams
-                "target_calories": 0,  # Daily calorie target
+                "name": "",
+                "profile_image": "",  # Path to user avatar image
+                "currentCalo": 0,
+                "currentProtein": 0,
+                "currentFat": 0,
+                "currentCarbs": 0,
+                "targetCalo": 0,  # Daily target carbohydrates in grams
+                "targetCarbs": 0,  # Daily target protein in grams
+                "targetFat": 0,  # Daily target fat in grams
+                "targetProtein": 0,  # Daily calorie target
             },
         ]
     }
@@ -539,10 +381,13 @@ def logout():
             "username": "",
             "avatar": "",  # Path to user avatar image
             "dob": datetime(2000, 1, 1).strftime("%d-%m-%Y"),  # Date of birth
+            "age": 0,
             "gender": "",  # User's gender
             "height": 0,  # Height in cm
             "weight": 0,  # Weight in kg
-            "bmi": 0.0,  # Body Mass Index, initially set to 0
+            "bmi": 0.0,
+            "disease": "",
+            "allergen": "",
             "activity_level": "",  # Activity level of the user
             "absorbed_carbs": 0,
             "absorbed_protein": 0,
@@ -948,36 +793,29 @@ def logout():
             },
         ]
 
-        st.session_state.addMember = [
-            {
-                "id": 0,
-                "username": "",
-                "fullname": "",
-                "avatar": "",  # Path to user avatar image
-            },
-        ]
+        st.session_state.addMember = []
+        st.session_state.addMemberUsername = []
 
         st.session_state.family = {
             "id": 0,
             "name": "",
             "avatar": "",
             "description": "",
-            "memberCount": 0,
             "member": [
-                {
-                    "id": 0,
-                    "username": "",
-                    "fullname": "",
-                    "avatar": "",  # Path to user avatar image
-                    "absorbed_carbs": 0,
-                    "absorbed_protein": 0,
-                    "absorbed_fat": 0,
-                    "absorbed_calories": 0,
-                    "target_carbs": 0,  # Daily target carbohydrates in grams
-                    "target_protein": 0,  # Daily target protein in grams
-                    "target_fat": 0,  # Daily target fat in grams
-                    "target_calories": 0,  # Daily calorie target
-                },
+                # {
+                #     "id": 0,
+                #     "username": "",
+                #     "fullname": "",
+                #     "avatar": "",  # Path to user avatar image
+                #     "absorbed_carbs": 0,
+                #     "absorbed_protein": 0,
+                #     "absorbed_fat": 0,
+                #     "absorbed_calories": 0,
+                #     "target_carbs": 0,  # Daily target carbohydrates in grams
+                #     "target_protein": 0,  # Daily target protein in grams
+                #     "target_fat": 0,  # Daily target fat in grams
+                #     "target_calories": 0,  # Daily calorie target
+                # },
             ]
         }
 

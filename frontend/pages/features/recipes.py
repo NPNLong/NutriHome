@@ -1,13 +1,17 @@
 import streamlit as st
 import pandas as pd
+from flask import Blueprint,request,jsonify
 import plotly.graph_objects as go
+import requests
+import json
 
-# Khởi tạo trạng thái của nút yêu thích
-if 'favorite' not in st.session_state:
-    st.session_state.favorite = False
+BACKEND_API = "http://127.0.0.1:5000"
 
 if "isSearch" not in st.session_state:
     st.session_state.isSearch = False
+
+if "search_food_name" not in st.session_state:
+    st.session_state.search_food_name = ""
 
 # Đổi trạng thái khi nhấn nút
 def toggle_favorite():
@@ -15,39 +19,17 @@ def toggle_favorite():
 
 # Hàm tạo các mục trong bữa ăn
 @st.dialog("Chi tiết món ăn", width="large")
-def details():
-    st.session_state.food_details = {
-        "id": 1,
-        "name": "Cơm",
-        "image": "food_images/com.jpg",
-        "rating" : 4.2,
-        "cooking_time" : 40,
-        "calories" : 2000,
-        "protein" : 150,
-        "carbs" : 200,
-        "fat" : 60,
-        "step" : """
-        - **Đong gạo**: Bạn dùng cốc đi kèm nồi cơm điện đong gạo, đong 1 cốc gạo khoảng 160gr cho 2 chén cơm.
+def details(id):
+    get_all_api = BACKEND_API + "/api/recipes/detail"
+    response = requests.get(get_all_api, data=json.dumps({"recipe_id": id}), headers = {
+        'Content-Type': 'application/json',
+    })
+    print(response.status_code)
+    print(response.json())
 
-        - **Vo gạo**: Cho nước vào nồi cơm đã có gạo, dùng tay nhẹ nhàng vo gạo rồi khuấy đều để cát bụi, vỏ trấu, sạn còn bám trên hạt gạo, chắt nước ra rồi tiếp tục chế nước sạch vào.
-
-        - **Đong nước**: Tùy loại gạo bạn nấu, và tùy bạn muốn ăn cơm nhão, khô hay vừa mà thêm nước sao cho phù hợp. Trong nồi cơm thường có nấc chia độ, cho thấy nên cho thêm bao nhiêu nước và gạo.
-
-        - **Thêm gia vị**: Để cơm được ngon hơn, thêm gia vị vào nước trước khi nấu, như 1 muỗng cà phê muối, 1/2 muỗng cà phê giấm hoặc 2 - 3 giọt dầu oliu.
-        """,
-        "ingredients" : """
-        - Gạo: 160gr (1 cốc)
-
-        - Nước: 280 ml
-
-        - Muối: 1 muỗng cà phê
-
-        - Giấm ăn: 1/2 muỗng cà phê
-        """
-    }
+    st.session_state.food_details =  response.json()["data"]
 
     st.header(st.session_state.food_details["name"], divider="grey")
-
     col1, col2 = st.columns([35,65])
 
     with col1:
@@ -77,15 +59,41 @@ def details():
 
         c1, c2 = st.columns([1, 1])
         with c1:
-            # Hiển thị nút yêu thích
-            if st.session_state.favorite:
-                if st.button("Yêu thích", on_click=toggle_favorite, type='primary', use_container_width=True):
-                    st.write("Bạn đã thích món ăn này!")
-            else:
-                if st.button("Đã yêu thích", on_click=toggle_favorite, use_container_width=True):
-                    st.write("Hãy yêu thích món ăn này!")
+            if st.button("Thêm món", use_container_width=True, type='primary'):
+                get_all_api = BACKEND_API + "/api/recipes/add-to-today-menu"
+                response = requests.post(
+                        get_all_api,
+                        data=json.dumps(
+                            {
+                                "user_id": f"{st.session_state.user["id"]}",
+                                "recipe_id": f"{id}",
+                                "meal": st.session_state.meal.lower()
+                            }
+                        ),
+                        headers = {'Content-Type': 'application/json',}
+                    )
+                print(response.status_code)
+                if response.status_code == 200:
+                    st.rerun()
         with c2:
-            rating =  st.button("Rating", use_container_width=True)
+            if st.button("Xóa món", use_container_width=True):
+                get_all_api = BACKEND_API + "/api/recipes/remove-from-today-menu"
+                response = requests.delete(
+                        get_all_api,
+                        data=json.dumps(
+                            {
+                                "user_id": f"{st.session_state.user["id"]}",
+                                "recipe_id": f"{id}",
+                                "meal": st.session_state.meal.lower()
+                            }
+                        ),
+                        headers = {'Content-Type': 'application/json',}
+                    )
+                print(response.status_code)
+                if response.status_code == 200:
+                    st.rerun()
+
+        rating =  st.button("Rating", use_container_width=True)
         if rating:
             with st.form("Rating"):
                 sentiment_mapping = ["one", "two", "three", "four", "five"]
@@ -137,12 +145,14 @@ def details():
             st.text("")
 
             st.subheader("Nguyên liệu")
-            st.write(st.session_state.food_details["ingredients"])
+            for idx, ingredients in enumerate(st.session_state.food_details["ingredients"]):
+                st.write(f" - {ingredients["name"]} {ingredients["quantity"]} {ingredients["unit"]}")
             
             st.text("")
             
             st.subheader("Cách làm")
-            st.write(st.session_state.food_details["step"])
+            for idx, steps in enumerate(st.session_state.food_details["steps"]):
+                st.write(f" - {steps}")
             # Video
             # st.markdown("[Xem hướng dẫn chi tiết qua video](https://youtu.be/QJZUwiJhKZ0?si=IO1AvQjjiCk6GzLO)")
 
@@ -162,7 +172,7 @@ def food_brief():
                     st.write(f"**Thời gian nấu**: {food['cooking_time']} phút")
                     display_rating(food["rating"])
                     if st.button("Chi tiết", use_container_width=True, key=f"{food['id']}_details"):
-                        details()
+                        details(food["id"])
 
         # Column 2
         if idx + 1 < len(st.session_state.searchingList):
@@ -176,7 +186,7 @@ def food_brief():
                     st.write(f"**Thời gian nấu**: {food['cooking_time']} phút")
                     display_rating(food["rating"])
                     if st.button("Chi tiết", use_container_width=True, key=f"{food['id']}_details"):
-                        details()
+                        details(food["id"])
 
         # Column 3
         if idx + 2 < len(st.session_state.searchingList):
@@ -190,7 +200,7 @@ def food_brief():
                     st.write(f"**Thời gian nấu**: {food['cooking_time']} phút")
                     display_rating(food["rating"])
                     if st.button("Chi tiết", use_container_width=True, key=f"{food['id']}_details"):
-                        details()
+                        details(food["id"])
 
 def display_rating(rating):
     # Display rating with stars based on rating value
@@ -206,7 +216,7 @@ with st.container(border=True):
     st.subheader("Search")
     col1, col2, col3 = st.columns([70, 15, 15])
     with col1:
-        search_food_name = st.text_input("Searching bar", label_visibility="collapsed")
+        st.session_state.search_food_name = st.text_input("Searching bar", label_visibility="collapsed")
     with col2:
         search = st.button("Tìm kiếm", use_container_width=True)
         if search:
@@ -221,103 +231,22 @@ st.subheader("List of foods", divider="grey")
 
 if st.session_state.isSearch:
     st.write("**You are searching**")
-    st.session_state.searchingList = []
-    st.session_state.searchingList = [
-                {
-                    "id": 8,
-                    "name": "Latte Art Chuẩn Barista",
-                    "image": "food_images/latteBarista.jpg",
-                    "cooking_time": 10,
-                    "rating": 4.6
-                },
-            ]
+    get_all_api = BACKEND_API + "/api/recipes/search-by-name"
+    response = requests.get(get_all_api, data=json.dumps({"recipe_name": st.session_state.search_food_name}), headers = {
+        'Content-Type': 'application/json',
+    })
+    print(response.status_code)
+    print(response.json())
+
+    st.session_state.searchingList =  response.json()
     food_brief()
 
 else:
-    st.session_state.searchingList = [
-                {
-                    "id": 1,
-                    "name": "Cơm",
-                    "image": "food_images/com.jpg",
-                    "cooking_time": 45,
-                    "rating": 4.5
-                },
-                {
-                    "id": 2,
-                    "name": "Thịt Kho Tàu",
-                    "image": "food_images/thitKhoTau.jpg",
-                    "cooking_time": 60,
-                    "rating": 4.8
-                },
-                {
-                    "id": 3,
-                    "name": "Rau Muống Xào Tỏi",
-                    "image": "food_images/rauMuongXaoToi.jpg",
-                    "cooking_time": 20,
-                    "rating": 1.6
-                },
-                {
-                    "id": 4,
-                    "name": "Canh Rau Muong Sau",
-                    "image": "food_images/canhRauMuongSau.jpg",
-                    "cooking_time": 10,
-                    "rating": 4.3
-                },
-                {
-                    "id": 5,
-                    "name": "Chả Ram Tôm Đất",
-                    "image": "food_images/chaRamTomDat.jpg",
-                    "cooking_time": 45,
-                    "rating": 4.4
-                },
-                {
-                    "id": 6,
-                    "name": "Salad trái cây trộn chua ngọt",
-                    "image": "food_images/saladTraiCay.jpg",
-                    "cooking_time": 5,
-                    "rating": 0.5
-                },
-                {
-                    "id": 7,
-                    "name": "Cá basa kho tộ",
-                    "image": "food_images/caBasaKhoTo.jpg",
-                    "cooking_time": 45,
-                    "rating": 3.8
-                },
-                {
-                    "id": 8,
-                    "name": "Latte Art Chuẩn Barista",
-                    "image": "food_images/latteBarista.jpg",
-                    "cooking_time": 10,
-                    "rating": 4.6
-                },
-                {
-                    "id": 9,
-                    "name": "Quýt ngâm đường phèn",
-                    "image": "food_images/quytNgam.jpg",
-                    "cooking_time": 5,
-                    "rating": 3.4
-                },
-                {
-                    "id": 10,
-                    "name": "Ức gà sốt cam",
-                    "image": "food_images/ucGaSotCam.jpg",
-                    "cooking_time": 35,
-                    "rating": 4.9
-                },
-                {
-                    "id": 11,
-                    "name": "Canh chua cá lóc nấu khế",
-                    "image": "food_images/canhChuaCaLoc.jpg",
-                    "cooking_time": 30,
-                    "rating": 4.2
-                },
-                {
-                    "id": 12,
-                    "name": "Sữa Chua Đào Vải Thạch Lá Dứa",
-                    "image": "food_images/suaChuaDaoVaiThach.jpg",
-                    "cooking_time": 3,
-                    "rating": 4.2
-                },
-            ]
+    get_all_api = BACKEND_API + "/api/recipes"
+    response = requests.get(get_all_api)
+    print(response.status_code)
+    print(response.json())
+
+    st.session_state.searchingList =  response.json()['data']
+    
     food_brief()
