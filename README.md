@@ -6,14 +6,13 @@
 1. [Giới thiệu](#gioi-thieu)  
 2. [Cài đặt và Cách sử dụng](#cai-dat-va-cach-su-dung)  
 3. [Tính năng](#tinh-nang)  
-4. [Hình ảnh giao diện](#hinh-anh-giao-dien)  
-5. [Hướng phát triển](#huong-phat-trien)
-6. [Thành viên nhóm](#member-list)
+5. [Thành viên nhóm](#member-list)
 
 ---
 <a id="gioi-thieu"></a>
 ## 🌟 **Giới thiệu**
 **NutriHome** là ứng dụng web giúp gợi ý thực đơn gia đình dựa trên lịch sử bữa ăn, nhu cầu dinh dưỡng cá nhân và hóa đơn mua sắm. Ứng dụng hỗ trợ người dùng xây dựng chế độ ăn uống phù hợp với sức khỏe và thói quen sinh hoạt của gia đình.
+
 Ứng dụng giúp bạn theo dõi và tổ chức thông tin sách dễ dàng, tiện lợi với giao diện thân thiện.
 
 🎯 **Lợi ích của NutriHome**
@@ -40,27 +39,27 @@
 
 ### 🔧 **Hướng dẫn cài đặt**
 **Clone ứng dụng về máy**
-```bash
+```cmd
 git clone https://github.com/Akapi895/NutriHome.git
 cd NutriHome
 ```
 **Cài đặt môi trường ảo và dependencies**
-```bash
+```cmd
 python -m venv venv
 source venv/bin/activate  # Trên macOS/Linux
 venv\Scripts\activate  # Trên Windows
 pip install -r requirements.txt
 ```
 **Chạy ứng dụng**
-```bash
+```cmd
 cd frontend
 streamlit run app.py
 ```
-```bash
+```cmd
 cd backend
 python app.py
 ```
-```bash
+```cmd
 cd menu_service
 python app.py
 ```
