@@ -1,56 +1,56 @@
-# 🍽️ **NutriHome: Ứng Dụng Gợi Ý Thực Đơn Gia Đình**
+# 🍽️ **NutriHome: Family Menu Suggestion Application**
 
 ---
 
-## 📖 **Mục Lục**  
-1. [Giới thiệu](#gioi-thieu)  
-2. [Cài đặt và Cách sử dụng](#cai-dat-va-cach-su-dung)  
-3. [Tính năng](#tinh-nang)  
-5. [Thành viên nhóm](#member-list)
+## 📖 **Table of Contents**  
+1. [Introduction](#introduction)  
+2. [Installation and Usage](#installation-and-usage)  
+3. [Features](#features)  
+4. [Team Members](#team-members)
 
 ---
-<a id="gioi-thieu"></a>
-## 🌟 **Giới thiệu**
-**NutriHome** là ứng dụng web giúp gợi ý thực đơn gia đình dựa trên lịch sử bữa ăn, nhu cầu dinh dưỡng cá nhân và hóa đơn mua sắm. Ứng dụng hỗ trợ người dùng xây dựng chế độ ăn uống phù hợp với sức khỏe và thói quen sinh hoạt của gia đình.
+<a id="introduction"></a>
+## 🌟 **Introduction**
+**NutriHome** is a web application that suggests family menus based on meal history, individual nutritional needs, and shopping receipts. The application helps users build a diet suitable for the health and lifestyle of the family.
 
-Ứng dụng giúp bạn theo dõi và tổ chức thông tin sách dễ dàng, tiện lợi với giao diện thân thiện.
+The application helps you track and organize book information easily and conveniently with a user-friendly interface.
 
-🎯 **Lợi ích của NutriHome**
+🎯 **Benefits of NutriHome**
 
-  🥗 Gợi ý thực đơn cá nhân hóa theo nhu cầu dinh dưỡng.
+  🥗 Personalized menu suggestions based on nutritional needs.
   
-  📊 Theo dõi lượng dinh dưỡng tiêu thụ thông qua lịch sử ăn uống.
+  📊 Track nutritional intake through meal history.
   
-  🏡 Xây dựng thực đơn cho cả gia đình.
+  🏡 Build menus for the whole family.
   
-  📷 Lưu lịch sử món ăn bằng xử lý hình ảnh hóa đơn.
+  📷 Save meal history by processing receipt images.
   
-  🍽️ Diễn đàn chia sẻ công thức nấu ăn.
+  🍽️ Recipe sharing forum.
 
 ---
-<a id="cai-dat-va-cach-su-dung"></a>
-## 🚀 **Cài đặt và Cách sử dụng**  
-### 💻 **Yêu cầu hệ thống**  
+<a id="installation-and-usage"></a>
+## 🚀 **Installation and Usage**  
+### 💻 **System Requirements**  
 - Python 3.x
 - Flask
 - Streamlit
 - SQLite
 - Gemini API
 
-### 🔧 **Hướng dẫn cài đặt**
-**Clone ứng dụng về máy**
+### 🔧 **Installation Instructions**
+**Clone the application to your machine**
 ```cmd
 git clone https://github.com/Akapi895/NutriHome.git
 cd NutriHome
 ```
-**Cài đặt môi trường ảo và dependencies**
+**Set up a virtual environment and install dependencies**
 ```cmd
 python -m venv venv
 source venv/bin/activate  # Trên macOS/Linux
 venv\Scripts\activate  # Trên Windows
 pip install -r requirements.txt
 ```
-**Chạy ứng dụng**
+**Run the application**
 ```cmd
 cd frontend
 streamlit run app.py
@@ -65,32 +65,32 @@ python app.py
 ```
 
 ---
-<a id="tinh-nang"></a>
-## ⚙️ **Tính năng**  
+<a id="features"></a>
+## ⚙️ **Features**  
 
-### 🥗 **1. Gợi ý thực đơn cá nhân hóa**  
-- Người dùng nhập **cân nặng, chiều cao, mức độ vận động** để tính toán nhu cầu dinh dưỡng.
-- Hệ thống gợi ý món ăn phù hợp với từng thành viên trong gia đình.
+### 🥗 **1. Personalized Menu Suggestions**  
+- Users input **weight, height, activity level** to calculate nutritional needs.
+- The system suggests suitable dishes for each family member.
 
-### 🏡 **2. Xây dựng thực đơn theo nhóm (gia đình)**  
-- Tạo nhóm gia đình để lập thực đơn theo tuần.
-- Đảm bảo các thành viên có chế độ ăn uống phù hợp.
+### 🏡 **2. Group (Family) Menu Planning**  
+- Create a family group to plan weekly menus.
+- Ensure members have appropriate diets.
 
-### 🧾 **3. Lưu lịch sử ăn uống**  
-- Lưu thông tin món ăn từ hóa đơn bằng xử lý hình ảnh.
-- Ghi nhận lịch sử ăn uống bên ngoài để theo dõi lượng dưỡng chất đã tiêu thụ.
+### 🧾 **3. Meal History Logging**  
+- Save meal information from receipts using image processing.
+- Record external meal history to track nutrient intake.
 
-### 🍳 **4. Hướng dẫn cách nấu**  
-- Đề xuất công thức món ăn phù hợp với thực đơn.
-- Hướng dẫn chi tiết cách chế biến từng món.
+### 🍳 **4. Cooking Instructions**  
+- Suggest recipes suitable for the menu.
+- Detailed instructions for preparing each dish.
 
-### 📚 **5. Diễn đàn chia sẻ công thức**  
-- Người dùng có thể chia sẻ công thức nấu ăn.
-- Lưu công thức yêu thích và tính toán giá trị dinh dưỡng.
+### 📚 **5. Recipe Sharing Forum**  
+- Users can share cooking recipes.
+- Save favorite recipes and calculate nutritional values.
 
 ---
-<a id="member-list"></a>
-## 👥 **Thành viên nhóm**
+<a id="team-members"></a>
+## 👥 **Team Members**
 - Nguyễn Phước Ngưỡng Long: Frontend Developer
 - Hoàng Khánh Chi: Backend Developer
 - Vũ Mạnh Cường: Backend Developer
@@ -98,4 +98,4 @@ python app.py
 
 ---
 
-Cảm ơn bạn đã sử dụng **NutriHome**! 🚀
+Thank you for using **NutriHome**! 🚀
