@@ -91,10 +91,10 @@ python app.py
 ---
 <a id="team-members"></a>
 ## 👥 **Team Members**
-- Nguyễn Phước Ngưỡng Long: Frontend Developer
-- Hoàng Khánh Chi: Backend Developer
-- Vũ Mạnh Cường: Backend Developer
-- Phạm Anh Tuấn: AI Engineer
+- Nguyễn Phước Ngưỡng Long
+- Hoàng Khánh Chi
+- Vũ Mạnh Cường
+- Phạm Anh Tuấn
 
 ---
 
